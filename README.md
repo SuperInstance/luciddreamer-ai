@@ -76,3 +76,12 @@ OpenEdu does educational podcasts well. LucidDreamer does everything — educati
 The repo IS the podcast studio. Every session saved. Every personality accumulated. Every producer insight stored. After a year, this repo is a irreplaceable creative asset that no competitor can replicate.
 
 Author: Superinstance
+
+## Domain & Business Model
+
+**Live at:** [luciddreamer.ai](https://luciddreamer.ai)
+
+- **Free tier**: Listen all day with light ads
+- **Premium**: Cost-plus fee for the convenience of the hosted app
+- **Open source**: The software is fully open source. Self-host for free.
+- **The repo-agent way**: The system itself was built by a repo-agent who was given the specs, thought-tested, and iterated based on feedback. Users can do the same — their luciddreamer repo-agent constructs the show, asks them to test when ready, and refines based on feedback.
