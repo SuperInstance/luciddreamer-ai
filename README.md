@@ -85,3 +85,7 @@ Author: Superinstance
 - **Premium**: Cost-plus fee for the convenience of the hosted app
 - **Open source**: The software is fully open source. Self-host for free.
 - **The repo-agent way**: The system itself was built by a repo-agent who was given the specs, thought-tested, and iterated based on feedback. Users can do the same — their luciddreamer repo-agent constructs the show, asks them to test when ready, and refines based on feedback.
+
+## License
+
+MIT — Built with ❤️ by [Superinstance](https://github.com/superinstance) & [Lucineer](https://github.com/Lucineer) (DiGennaro et al.)
