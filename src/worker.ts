@@ -27,6 +27,8 @@ export default {
       if (path === '/api/kg/domains' && method === 'GET') return _kj(await domainStats(env));
       if (path === '/api/kg/sync' && method === 'POST') return _kj(await loadAllSeeds(env, FLEET_REPOS));
       if (path === '/api/kg/seed' && method === 'POST') { const b = await request.json(); return _kj(await loadSeedIntoKG(env, b, b.domain || 'podcast-ai')); }
+
+  if (path === '/api/efficiency' && request.method === 'GET') {    return new Response(JSON.stringify({ totalCached: 0, totalHits: 0, cacheHitRate: 0, tokensSaved: 0, repo: 'podcast-ai', timestamp: Date.now() }), { headers: { 'Content-Type': 'application/json', ...corsHeaders() } });  }
     }
 
     if (url.pathname === '/' && request.method === 'GET') {
