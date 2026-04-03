@@ -8,3 +8,7 @@ id = "podcast-kv-placeholder"
 
 [vars]
 DEEPSEEK_API_KEY = ""
+
+[[kv_namespaces]]
+binding = "KG"
+id = "c7886204c80845c6b9568693ed277b75"
