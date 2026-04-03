@@ -1,4 +1,5 @@
 import { addNode, addEdge, traverse, crossDomainQuery, findPath, domainStats, getDomainNodes } from './lib/knowledge-graph.js';
+import { getTracker } from './lib/confidence-tracker.js';
 import { loadSeedIntoKG, FLEET_REPOS, loadAllSeeds } from './lib/seed-loader.js';
 import { DEFAULT_PERSONALITIES, createPersonality, TopicManager, GrowthEngine, SessionManager, buildSystemPrompt } from './podcast/engine';
 import type { Personality, Topic, ListenerInteraction, PodcastSession } from './podcast/engine';
@@ -142,6 +143,12 @@ export default {
           controller.close();
         }
       });
+
+      // Track confidence after successful LLM response
+      try {
+        const tracker = getTracker();
+        tracker.trackConfidence();
+      } catch {}
 
       // Save session state
       session.updatedAt = Date.now();
