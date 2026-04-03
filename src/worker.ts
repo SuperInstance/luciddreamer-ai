@@ -6,13 +6,14 @@ import type { Personality, Topic, ListenerInteraction, PodcastSession } from './
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    const path = url.pathname;
+    const method = request.method;
     const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': '*', 'Access-Control-Allow-Headers': '*' };
-    if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
+    if (method === 'OPTIONS') return new Response(null, { headers: cors });
 
     const json = () => request.json().catch(() => ({}));
     const headers = { 'Content-Type': 'application/json', ...cors };
 
-    // ── Landing Page ──
     // ── Knowledge Graph (Phase 4B) ──
     if (path.startsWith('/api/kg')) {
       const _kj = (d: any, s = 200) => new Response(JSON.stringify(d), { status: s, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
