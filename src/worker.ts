@@ -7,11 +7,6 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    if (path === '/health') {
-      return new Response(JSON.stringify({ status: 'ok', repo: 'podcast-ai', timestamp: Date.now() }), {
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-      });
-    }
     const path = url.pathname;
 
   if (path === '/health') {
@@ -20,11 +15,8 @@ export default {
     });
   }
 
-  if (path === '/health') {
-    return new Response(JSON.stringify({ status: 'ok', repo: 'podcast-ai', timestamp: Date.now() }), {
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-    });
-  }
+
+
     const method = request.method;
     const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': '*', 'Access-Control-Allow-Headers': '*' };
     if (method === 'OPTIONS') return new Response(null, { headers: cors });
