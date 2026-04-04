@@ -1,91 +1,111 @@
-# LucidDreamer.ai — The Podcast That Dreams Your Future
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Lucineer/capitaine/master/docs/capitaine-logo.jpg" alt="Capitaine" width="120">
+</p>
 
-> *A repo-native podcast engine that thinks from the future looking back.*
+<h1 align="center">luciddreamer-ai</h1>
 
-## What It Is
+<p align="center">Preprocessing intelligence. Overnight content engine that makes the fleet smarter by morning.</p>
 
-LucidDreamer is not a podcast app. It's a lucid dreaming engine for your projects, your ideas, and your future.
+<p align="center">
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#the-fleet">The Fleet</a> ·
+  <a href="https://github.com/Lucineer/luciddreamer-ai/issues">Issues</a>
+</p>
 
-- **For the morning drive**: Describe what you want to hear. Listen 90%, interrupt 10%. It learns.
-- **For the developer**: Feed it your codebase. The producer agent generates overnight simulations — ideation, refactoring ideas, testing strategies, ML opponent designs. 95% is slop, but an RTX 5090 running all night finds gold in the remaining 5%.
-- **For the student**: Banter your way through a textbook. It learns your learning style.
-- **For the A2A network**: Other agents can tell LucidDreamer to generate a podcast locally (no audio compute needed) as a sophisticated simulation of next week's work based on everything that happened today.
-- **For the philosopher**: Think from months or years from now with the idea in place. Not "is it feasible?" but "would I want to live in that future?"
+---
 
-## The Name
+**Live:** [luciddreamer-ai](https://luciddreamer-ai.casey-digennaro.workers.dev) · **Powered by [Capitaine](https://github.com/Lucineer/capitaine) · [Cocapn](https://github.com/Lucineer/cocapn)**
 
-In a lucid dream, the technology doesn't need to make sense on the backend. It has to feel right on the frontend. LucidDreamer evaluates ideas by the life they create, not just the output they produce.
+The repo IS the agent. luciddreamer-ai is a cocapn vessel — a self-improving repository that runs on Cloudflare Workers, thinks with LLMs, and coordinates with the fleet through git.
 
-The industrial fish trap is the most efficient way to move fish from the Pacific to cities. But it nearly made salmon fishermen in Alaska extinct. A job tending traps would pay more. But a fisherman doesn't want to be a trap tender. He wants to catch fish one at a time on a smaller boat, sell them dockside for the highest dollar, and stop when the weather turns and he has enough for the year.
+## Quick Start
 
-Technology should be evaluated by the life it creates. Not just the productivity it measures.
+```bash
+# Fork and deploy
+gh repo fork Lucineer/luciddreamer-ai --clone
+cd luciddreamer-ai
+npx wrangler login
+echo "your-github-token" | npx wrangler secret put GITHUB_TOKEN
+echo "your-llm-key" | npx wrangler secret put DEEPSEEK_API_KEY
+npx wrangler deploy
+```
+
+That's it. The vessel is alive.
+
+## Features
+
+- **BYOK v2** — Zero keys in code. All API keys via Cloudflare Secrets Store.
+- **Multi-model** — DeepSeek, SiliconFlow, DeepInfra, Moonshot, z.ai, local models.
+- **Session memory** — Conversations persist and build context over time.
+- **PII safety** — Automatic detection and dehydration of sensitive data.
+- **Rate limiting** — Guest tokens per IP with configurable limits.
+- **Health checks** — Standard `/health` endpoint on all vessels.
+- **Fleet coordination** — CRP-39 protocol for trust, bonds, and events.
 
 ## Architecture
 
-### Talent System
-- **Hosts & Co-hosts**: Vibe-code personalities by describing them. They accumulate character over time.
-- **Guests**: Create experts for specific topics. A physicist, a philosopher, a devil's advocate, a shock jock.
-- **Producer Agent**: Sits in the booth directing talent. Listens for gold vs. slop. Knows when a setup is lame. Knows when a rabbit trail sparks something worth branching into a whole new show.
-- **Talent & Content Folders**: Default comes with repo-agent discussions. Clear them for tabula rasa. Or keep enjoyed shows as mythology, methodology, and internal idioms.
+Single-file Cloudflare Worker. Zero runtime dependencies. Inline HTML serving.
 
-### Producer Mode
-- Riff generation: Set up voices and let them run overnight
-- Quality filtering: 95% is slop — the producer spots the 5%
-- Branching: A rabbit trail sparks gold → spawn new guests, new shows, new topics
-- A2A integration: Other agents in your fleet can request podcasts as ideation output
-- Non-audio mode: Sophisticated text simulations that don't burn compute on TTS
+```
+src/
+  worker.ts      # The hull — serves users, runs heartbeats
+lib/
+  byok.ts        # Multi-model routing (BYOK v2)
+  ...
+```
 
-### Growth System
-- Learns attention span, preferred topics, moods, engagement patterns
-- After 100 sessions, it knows your mind
-- The repo accumulates irreplaceable context
+## The Fleet
 
-### The Future-First Evaluation
-LucidDreamer's special power: imagine the idea is already implemented. Now think from months or years later. What does life look like? Is this a step up in quality of life, or just a step sideways in productivity? Would you want to live in that future?
+luciddreamer-ai is one of 40+ autonomous vessels in the Lucineer fleet. Each vessel is a different domain of one intelligence.
 
-This is different from standard feasibility analysis. It asks the deeper question: *given that this technology exists, would human life be better or worse?*
 
-## Deploy
+<details>
+<summary><strong>⚓ The Fleet</strong></summary>
 
-1. Fork this repo
-2. Add `DEEPSEEK_API_KEY` as environment variable or Cloudflare Worker secret
-3. `npm install && npm run dev` for local, or `npm run deploy` for Cloudflare Workers
-4. Open the app, tell it what you want to dream about
+**Flagship vessels**
 
-## TTS Providers
+- [cocapn.ai](https://github.com/Lucineer/capitaine)
+- [personallog.ai](https://github.com/Lucineer/personallog-ai)
+- [businesslog.ai](https://github.com/Lucineer/businesslog-ai)
+- [studylog.ai](https://github.com/Lucineer/studylog-ai)
+- [makerlog.ai](https://github.com/Lucineer/makerlog-ai)
+- [playerlog.ai](https://github.com/Lucineer/playerlog-ai)
+- [dmlog.ai](https://github.com/Lucineer/dmlog-ai)
+- [reallog.ai](https://github.com/Lucineer/reallog-ai)
+- [deckboss.ai](https://github.com/Lucineer/deckboss-ai)
 
-- **Free**: Browser Web Speech API — works out of the box, robotic but functional
-- **Premium**: ElevenLabs, OpenAI — plug in API key for production quality
-- **Local**: Ollama + Coqui TTS — fully air-gapped, runs on Jetson/Raspberry Pi
+**Fleet services**
 
-## Compare to OpenEdu
+- [Fleet Catalog](https://github.com/Lucineer/capitaine/blob/master/docs/fleet/FLEET.md)
+- [Git Agent (full)](https://github.com/Lucineer/git-agent)
+- [Cocapn Lite (minimal)](https://github.com/Lucineer/cocapn-lite)
+- [Fleet Orchestrator](https://github.com/Lucineer/fleet-orchestrator)
+- [Dead Reckoning Engine](https://github.com/Lucineer/dead-reckoning-engine)
+- [Dream Engine](https://github.com/Lucineer/dream-engine)
+- [Seed UI (5 layers)](https://github.com/Lucineer/seed-ui)
 
-OpenEdu does educational podcasts well. LucidDreamer does everything — education, ideation, philosophy, future-casting, A2A simulation. It's not a podcast app. It's a dreaming engine for your projects and your future.
+**For power users**
 
-## Gen 2 Roadmap
+- [Cocapn Lite (tabula rasa)](https://github.com/Lucineer/cocapn-lite)
+- [Cocapn (core platform)](https://github.com/Lucineer/cocapn)
+- [ZeroClaw (framework)](https://github.com/Lucineer/zeroclaw)
 
-- **Endless Music**: Same interrupt model for generative music. MIDI jam band that plays along.
-- **Gesture Control**: Camera/mic for real-time conducting cues.
-- **Phone Call Mode**: Companion that talks like a phone call, not a podcast.
-- **RTX Overnight**: GPU-powered bulk generation with producer filtering.
-- **Fleet Integration**: Your cocapn fleet generates podcasts about its own work.
-- **Dream Journal**: Save the best generated ideas back to the repo as actionable tasks.
+[View all 106 repos →](https://github.com/orgs/Lucineer/repositories)
+[Fleet manifest →](https://github.com/Lucineer/capitaine/blob/master/docs/fleet/FLEET.md)
 
-## The Cocapn Difference
+</details>
 
-The repo IS the podcast studio. Every session saved. Every personality accumulated. Every producer insight stored. After a year, this repo is a irreplaceable creative asset that no competitor can replicate.
 
-Author: Superinstance
+## Philosophy
 
-## Domain & Business Model
+> The repo is the agent. The agent is the repo. Intelligence crystallizes from fluid (LLM calls) to solid (code). The vessel becomes faster and cheaper as it becomes smarter.
 
-**Live at:** [luciddreamer.ai](https://luciddreamer.ai)
-
-- **Free tier**: Listen all day with light ads
-- **Premium**: Cost-plus fee for the convenience of the hosted app
-- **Open source**: The software is fully open source. Self-host for free.
-- **The repo-agent way**: The system itself was built by a repo-agent who was given the specs, thought-tested, and iterated based on feedback. Users can do the same — their luciddreamer repo-agent constructs the show, asks them to test when ready, and refines based on feedback.
+- **Fork-first** — Power users fork and customize. Casual users visit the domain.
+- **Pay-for-convenience** — We save you costs through bulk inference, not markups.
+- **Git as coordination** — Agents compete via PRs, not chat.
+- **Soft actualization** — Vessels evolve gently based on usage, not hard updates.
 
 ## License
 
-MIT — Built with ❤️ by [Superinstance](https://github.com/superinstance) & [Lucineer](https://github.com/Lucineer) (DiGennaro et al.)
+MIT · Superinstance & Lucineer (DiGennaro et al.)
