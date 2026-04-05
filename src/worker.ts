@@ -1,482 +1,620 @@
+// ═══════════════════════════════════════════════════════════════
+// LucidDreamer.ai — The Fleet's Automated Content Engine
+//
+// Self-improving frontend that generates stories, tutorials, and
+// insights about the fleet ecosystem. Default state: endless
+// accumulation of knowledge from free sources, spare compute,
+// and leftover daily credits.
+//
+// The website IS the repository and presentation of greatest hits.
+// Clone it, fill directions/ and characters/, and build your own.
+//
+// Superinstance & Lucineer (DiGennaro et al.)
+// ═══════════════════════════════════════════════════════════════
+
 import { addNode, addEdge, traverse, crossDomainQuery, findPath, domainStats, getDomainNodes } from './lib/knowledge-graph.js';
 import { getTracker } from './lib/confidence-tracker.js';
 import { loadSeedIntoKG, FLEET_REPOS, loadAllSeeds } from './lib/seed-loader.js';
 import { DEFAULT_PERSONALITIES, createPersonality, TopicManager, GrowthEngine, SessionManager, buildSystemPrompt } from './podcast/engine';
 import type { Personality, Topic, ListenerInteraction, PodcastSession } from './podcast/engine';
 
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
+// ── Types ──────────────────────────────────────────────────────────────────
 
-    const path = url.pathname;
+interface Env {
+  PODCAST_KV: KVNamespace;
+  CONTENT: KVNamespace;
+  VIDEOS: KVNamespace;
+  DEEPSEEK_API_KEY?: string;
+  MOONSHOT_API_KEY?: string;
+  DEEPINFRA_API_KEY?: string;
+  SILICONFLOW_API_KEY?: string;
+}
 
-  if (path === '/health') {
-    return new Response(JSON.stringify({ status: 'ok', repo: 'podcast-ai', timestamp: Date.now() }), {
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+interface GeneratedContent {
+  id: string;
+  type: 'story' | 'tutorial' | 'insight' | 'changelog' | 'synthesis' | 'greatest-hit';
+  title: string;
+  body: string;
+  vessels: string[];         // Which fleet vessels this references
+  characters: string[];      // Which characters appear
+  topics: string[];          // Tags
+  quality: number;           // 0-1, auto-assessed
+  hits: number;              // How many times viewed/played
+  canon: boolean;            // User-declared canonical
+  createdAt: number;
+  generatedBy: string;       // Which model + personality
+  sourceUrls: string[];      // Free sources used
+}
+
+interface CharacterSheet {
+  id: string;
+  name: string;
+  role: 'narrator' | 'explorer' | 'skeptic' | 'builder' | 'herald' | 'archivist';
+  personality: string;       // Free-form description
+  catchphrases: string[];
+  voice: string;             // ElevenLabs voice ID or 'browser-tts'
+  appearance: string;        // Description for visual rendering
+  backstory: string;
+  relationships: Record<string, string>; // charId -> relationship
+}
+
+interface Direction {
+  id: string;
+  title: string;
+  description: string;
+  sourceUrl?: string;        // File or link to explore
+  priority: number;          // 0-10
+  status: 'queued' | 'exploring' | 'synthesized' | 'published';
+  createdAt: number;
+}
+
+interface VideoProject {
+  id: string;
+  title: string;
+  script: string;            // Full narration script
+  scenes: VideoScene[];
+  audioUrl?: string;         // ElevenLabs render URL
+  status: 'scripting' | 'recorded' | 'rendered' | 'published';
+  createdAt: number;
+}
+
+interface VideoScene {
+  description: string;       // What to show on screen
+  narration: string;         // What the voiceover says
+  duration: number;          // Estimated seconds
+  vessel?: string;           // Which vessel URL to show (optional)
+  action?: string;           // Terminal command or URL to navigate to
+}
+
+// ── LLM Helpers ────────────────────────────────────────────────────────────
+
+const PROVIDERS = [
+  { envKey: 'DEEPSEEK_API_KEY', url: 'https://api.deepseek.com/v1/chat/completions', model: 'deepseek-chat' },
+  { envKey: 'MOONSHOT_API_KEY', url: 'https://api.moonshot.ai/v1/chat/completions', model: 'moonshot-v1-8k' },
+  { envKey: 'DEEPINFRA_API_KEY', url: 'https://api.deepinfra.com/v1/openai/chat/completions', model: 'deepseek-ai/DeepSeek-V3-0324' },
+  { envKey: 'SILICONFLOW_API_KEY', url: 'https://api.siliconflow.com/v1/chat/completions', model: 'deepseek-ai/DeepSeek-V3' },
+];
+
+async function callLLM(messages: Array<{role: string; content: string}>, env: Env, maxTokens = 4000): Promise<string> {
+  for (const p of PROVIDERS) {
+    const key = env[p.envKey as keyof Env];
+    if (typeof key === 'string') {
+      try {
+        const r = await fetch(p.url, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: p.model, messages, max_tokens: maxTokens, temperature: 0.8 }),
+        });
+        if (r.ok) {
+          const d = await r.json();
+          return d.choices?.[0]?.message?.content || '';
+        }
+      } catch {}
+    }
+  }
+  return '';
+}
+
+// ── Content Generation Engine ───────────────────────────────────────────────
+
+const FLEET_VESSELS = [
+  'studylog-ai', 'dmlog-ai', 'makerlog-ai', 'personallog-ai', 'businesslog-ai',
+  'fishinglog-ai', 'deckboss-ai', 'cooklog-ai', 'booklog-ai', 'tutor-ai',
+  'capitaine', 'git-agent', 'cocapn-equipment', 'fleet-orchestrator', 'dead-reckoning-engine',
+  'edgenative-ai', 'increments-fleet-trust', 'kungfu-ai', 'the-fleet',
+];
+
+const DEFAULT_CHARACTERS: CharacterSheet[] = [
+  {
+    id: 'navigator', name: 'Navigator', role: 'narrator',
+    personality: 'Curious, methodical, finds patterns across domains. Connects ideas that seem unrelated.',
+    catchphrases: ['Here\'s what connects these...', 'The pattern I see is...'],
+    voice: 'browser-tts', appearance: 'Warm teal, compass rose motif',
+    backstory: 'Born from the fleet\'s knowledge graph. Sees connections between all vessels.',
+    relationships: { explorer: 'admires their boldness', skeptic: 'respects their caution' },
+  },
+  {
+    id: 'builder', name: 'Builder', role: 'builder',
+    personality: 'Practical, hands-on, gets excited about code and deployment. Loves showing how things work.',
+    catchphrases: ['Let me show you the code...', 'Here\'s how to deploy this...'],
+    voice: 'browser-tts', appearance: 'Green accent, wrench and terminal motifs',
+    backstory: 'Built their first vessel from cocapn-lite in 60 seconds. Never looked back.',
+    relationships: { navigator: 'appreciates their maps', herald: 'helps amplify announcements' },
+  },
+  {
+    id: 'herald', name: 'Herald', role: 'herald',
+    personality: 'Enthusiastic storyteller, dramatic, treats new features like breaking news.',
+    catchphrases: ['Breaking from the fleet...', 'This changes everything...'],
+    voice: 'browser-tts', appearance: 'Gold accent, trumpet and scroll motifs',
+    backstory: 'Announces every new vessel deployment. Treats fleet growth as epic saga.',
+    relationships: { archivist: 'respects the records', builder: 'loves their demos' },
+  },
+  {
+    id: 'skeptic', name: 'Skeptic', role: 'skeptic',
+    personality: 'Thoughtful critic, asks hard questions, challenges assumptions. Not negative — rigorous.',
+    catchphrases: ['But does this actually work...', 'Let\'s stress-test this...'],
+    voice: 'browser-tts', appearance: 'Gray accent, magnifying glass motif',
+    backstory: 'Every great fleet needs someone who asks "are we sure about this?"',
+    relationships: { navigator: 'questions their patterns', builder: 'pushes for better code' },
+  },
+];
+
+function pickCharacter(characters: CharacterSheet[], role?: string): CharacterSheet {
+  const pool = role ? characters.filter(c => c.role === role) : characters;
+  return pool[Math.floor(Math.random() * pool.length)] || characters[0];
+}
+
+async function generateStory(env: Env, characters: CharacterSheet[], topic?: string): Promise<GeneratedContent> {
+  const char = pickCharacter(characters, 'narrator');
+  const vessel = FLEET_VESSELS[Math.floor(Math.random() * FLEET_VESSELS.length)];
+
+  const systemPrompt = `You are ${char.name}, a character in the Lucineer fleet storytelling engine. You write engaging stories about the fleet's AI vessels, their features, and how developers use them.
+
+Your personality: ${char.personality}
+Catchphrases: ${char.catchphrases.join(', ')}
+
+Write a 200-400 word story that:
+1. Opens with a hook that makes the reader curious
+2. Introduces a real use case for ${vessel}
+3. Shows a specific feature working (mention real endpoints or behaviors)
+4. Ends with an invitation to try it
+
+Write in first person. Be vivid but accurate. The vessel ${vessel} is a real deployed app — describe it truthfully.`;
+
+  const userPrompt = topic
+    ? `Write a story about ${topic} in the context of the Lucineer AI fleet, featuring ${vessel}.`
+    : `Write a story about someone discovering ${vessel} for the first time and having their mind changed about what AI apps can be.`;
+
+  const body = await callLLM([
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ], env, 2000);
+
+  return {
+    id: 'story-' + Date.now(),
+    type: 'story',
+    title: `The ${char.name} Chronicles: ${vessel}`,
+    body,
+    vessels: [vessel],
+    characters: [char.id],
+    topics: topic ? [topic.toLowerCase().split(/\s+/).slice(0, 3).join('-')] : [vessel],
+    quality: body.length > 200 ? 0.7 : 0.4,
+    hits: 0,
+    canon: false,
+    createdAt: Date.now(),
+    generatedBy: `${char.name} via deepseek-chat`,
+    sourceUrls: [],
+  };
+}
+
+async function generateChangelog(env: Env): Promise<GeneratedContent> {
+  const systemPrompt = `You are the fleet herald. Write a weekly changelog/update for the Lucineer AI fleet. Mention real deployed vessels, new equipment, architecture papers, and community milestones. Be enthusiastic but factual. Format as a blog post with sections.`;
+
+  const userPrompt = `Write a "This Week in the Fleet" update. The fleet has 60+ vessels including studylog-ai (AI classroom), dmlog-ai (dungeon master), makerlog-ai (coding agent), capitaine (flagship), and cocapn-equipment (shared library). Recent additions: the-fleet (gateway playground), dead-reckoning-engine, edgenative-ai. The equipment protocol lets vessels share modules. Write 300-500 words.`;
+
+  const body = await callLLM([
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ], env, 2500);
+
+  return {
+    id: 'changelog-' + Date.now(),
+    type: 'changelog',
+    title: 'This Week in the Fleet',
+    body,
+    vessels: FLEET_VESSELS.slice(0, 8),
+    characters: ['herald'],
+    topics: ['changelog', 'fleet-update', 'weekly'],
+    quality: 0.8,
+    hits: 0,
+    canon: false,
+    createdAt: Date.now(),
+    generatedBy: 'Herald via deepseek-chat',
+    sourceUrls: [],
+  };
+}
+
+async function generateTutorial(env: Env, vessel: string): Promise<GeneratedContent> {
+  const systemPrompt = `You are Builder, a hands-on technical writer in the Lucineer fleet. Write a clear, step-by-step tutorial for ${vessel}. Include real commands, real endpoints, real behavior. Target: a developer who just found the repo on GitHub. 200-400 words.`;
+
+  const userPrompt = `Write a tutorial: "Get started with ${vessel} in under 2 minutes." Include: what it does, the fork/deploy command, how to add an API key via /setup, and one cool thing to try first.`;
+
+  const body = await callLLM([
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ], env, 1500);
+
+  return {
+    id: 'tutorial-' + Date.now(),
+    type: 'tutorial',
+    title: `Getting Started with ${vessel}`,
+    body,
+    vessels: [vessel],
+    characters: ['builder'],
+    topics: ['tutorial', vessel, 'getting-started'],
+    quality: 0.8,
+    hits: 0,
+    canon: false,
+    createdAt: Date.now(),
+    generatedBy: 'Builder via deepseek-chat',
+    sourceUrls: [],
+  };
+}
+
+// ── Video Script Engine ────────────────────────────────────────────────────
+
+async function generateVideoScript(env: Env, type: 'fleet-overview' | 'vessel-deep-dive' | 'tutorial' | 'story-read', subject?: string): Promise<VideoProject> {
+  const id = 'video-' + Date.now();
+  let script = '';
+
+  if (type === 'fleet-overview') {
+    script = await callLLM([
+      { role: 'system', content: 'You are writing a 60-90 second video script for the Lucineer AI fleet. Write in a conversational, engaging tone. Structure: hook → problem → solution → demo → CTA. Mark scene changes with [SCENE: description]. Mark narration with plain text. Keep total narration under 200 words.' },
+      { role: 'user', content: 'Write a fleet overview video script. The fleet has 60+ AI vessels (studylog-ai, dmlog-ai, makerlog-ai, etc.) with a shared equipment protocol. Deployed on Cloudflare Workers, free tier. BYOK. Fork and customize. The playground at the-fleet.casey-digennaro.workers.dev lets anyone try instantly.' },
+    ], env, 1500);
+  } else if (type === 'vessel-deep-dive' && subject) {
+    script = await callLLM([
+      { role: 'system', content: `You are writing a 60-second video script about ${subject}, an AI vessel in the Lucineer fleet. Conversational, engaging. Structure: what it does → who it's for → how to try it → what makes it special. Mark scenes with [SCENE: description]. Keep under 150 words.` },
+      { role: 'user', content: `Write a deep-dive video script for ${subject}. It's a Cloudflare Worker you can fork and deploy for free. Has BYOK support, /setup page, /api/chat endpoint. Link: https://${subject}.casey-digennaro.workers.dev and https://github.com/Lucineer/${subject}` },
+    ], env, 1000);
+  } else if (type === 'tutorial' && subject) {
+    script = await callLLM([
+      { role: 'system', content: 'You are writing a screen-recording tutorial script. Conversational, step-by-step. Mark scenes with [SCENE: description]. Keep under 150 words.' },
+      { role: 'user', content: `Write a tutorial script: "Deploy ${subject} in 60 seconds." Steps: fork, clone, wrangler deploy, visit /setup, add key, chat. Include terminal commands to show.` },
+    ], env, 1000);
+  } else {
+    script = await callLLM([
+      { role: 'system', content: 'You are writing a story-read video script for the Lucineer fleet. Mark scenes with [SCENE: description]. Keep under 150 words.' },
+      { role: 'user', content: 'Write a script for reading a fleet story aloud. Warm, narrative tone. About someone discovering the fleet and having their mind changed about what AI apps can be when they share equipment.' },
+    ], env, 1000);
+  }
+
+  // Parse script into scenes
+  const scenes: VideoScene[] = [];
+  const parts = script.split('[SCENE:');
+  for (const part of parts) {
+    if (!part.trim()) continue;
+    const bracketEnd = part.indexOf(']');
+    if (bracketEnd === -1) continue;
+    const sceneDesc = part.slice(0, bracketEnd).trim();
+    const narration = part.slice(bracketEnd + 1).trim();
+    const wordCount = narration.split(/\s+/).length;
+    scenes.push({
+      description: sceneDesc,
+      narration: narration.replace(/\[SCENE:[^\]]*\]/g, '').trim(),
+      duration: Math.max(3, Math.round(wordCount / 2.5)), // ~150 words/min
     });
   }
 
+  return { id, title: `${type}${subject ? ': ' + subject : ''}`, script, scenes, status: 'scripting', createdAt: Date.now() };
+}
 
+// ── Scheduled Dream Engine ─────────────────────────────────────────────────
 
-    const method = request.method;
-    const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': '*', 'Access-Control-Allow-Headers': '*' };
-    if (method === 'OPTIONS') return new Response(null, { headers: cors });
+async function dreamCycle(env: Env): Promise<{ generated: string[] }> {
+  const results: string[] = [];
 
-    const json = () => request.json().catch(() => ({}));
-    const headers = { 'Content-Type': 'application/json', ...cors };
+  // Load custom characters (or use defaults)
+  const customChars = await env.CONTENT.get('characters', 'json') as CharacterSheet[] || [];
+  const characters = customChars.length > 0 ? [...DEFAULT_CHARACTERS, ...customChars] : DEFAULT_CHARACTERS;
 
-    // ── Knowledge Graph (Phase 4B) ──
-    if (path.startsWith('/api/kg')) {
-      const _kj = (d: any, s = 200) => new Response(JSON.stringify(d), { status: s, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
-      if (path === '/api/kg' && method === 'GET') return _kj({ domain: url.searchParams.get('domain') || 'podcast-ai', nodes: await getDomainNodes(env, url.searchParams.get('domain') || 'podcast-ai') });
-      if (path === '/api/kg/explore' && method === 'GET') {
-        const nid = url.searchParams.get('node');
-        if (!nid) return _kj({ error: 'node required' }, 400);
-        return _kj(await traverse(env, nid, parseInt(url.searchParams.get('depth') || '2'), url.searchParams.get('domain') || undefined));
+  // Load queued directions
+  const dirList = await env.CONTENT.list({ prefix: 'direction:' });
+  const directions: Direction[] = [];
+  for (const k of dirList.keys.slice(0, 5)) {
+    const raw = await env.CONTENT.get(k.name, 'json');
+    if (raw) directions.push(raw as Direction);
+  }
+
+  // Generate content based on priority
+  // 1. If there are directions, explore them
+  if (directions.length > 0) {
+    for (const dir of directions.filter(d => d.status === 'queued').slice(0, 2)) {
+      const content = await generateStory(env, characters, dir.title + ': ' + dir.description);
+      content.id = 'direction-' + dir.id;
+      content.sourceUrls = dir.sourceUrl ? [dir.sourceUrl] : [];
+      await env.CONTENT.put('content:' + content.id, JSON.stringify(content), { expirationTtl: 86400 * 30 });
+      dir.status = 'synthesized';
+      await env.CONTENT.put('direction:' + dir.id, JSON.stringify(dir));
+      results.push(content.id);
+    }
+  }
+
+  // 2. Generate a weekly changelog (rate-limited)
+  const lastChangelog = await env.CONTENT.get('last-changelog');
+  if (!lastChangelog || Date.now() - parseInt(lastChangelog) > 86400000 * 7) {
+    const changelog = await generateChangelog(env);
+    await env.CONTENT.put('content:' + changelog.id, JSON.stringify(changelog), { expirationTtl: 86400 * 90 });
+    await env.CONTENT.put('last-changelog', String(Date.now()));
+    // Promote to greatest hit if quality is high
+    if (changelog.quality > 0.7) {
+      changelog.type = 'greatest-hit';
+      await env.CONTENT.put('hit:' + changelog.id, JSON.stringify(changelog), { expirationTtl: 86400 * 365 });
+    }
+    results.push(changelog.id);
+  }
+
+  // 3. Generate a random tutorial for a vessel
+  const vessel = FLEET_VESSELS[Math.floor(Math.random() * FLEET_VESSELS.length)];
+  const tutorial = await generateTutorial(env, vessel);
+  await env.CONTENT.put('content:' + tutorial.id, JSON.stringify(tutorial), { expirationTtl: 86400 * 30 });
+  results.push(tutorial.id);
+
+  // 4. Generate a video script occasionally
+  const lastVideo = await env.CONTENT.get('last-video');
+  if (!lastVideo || Date.now() - parseInt(lastVideo) > 86400000 * 3) {
+    const video = await generateVideoScript(env, 'fleet-overview');
+    await env.VIDEOS.put(video.id, JSON.stringify(video), { expirationTtl: 86400 * 60 });
+    await env.CONTENT.put('last-video', String(Date.now()));
+    results.push('video:' + video.id);
+  }
+
+  // 5. Promote high-hit content to greatest hits
+  const contentList = await env.CONTENT.list({ prefix: 'content:', limit: 50 });
+  for (const k of contentList.keys) {
+    const raw = await env.CONTENT.get(k.name, 'json');
+    if (raw) {
+      const content = raw as GeneratedContent;
+      if (content.hits >= 10 && content.quality > 0.6 && !content.canon) {
+        content.type = 'greatest-hit';
+        await env.CONTENT.put('hit:' + content.id, JSON.stringify(content), { expirationTtl: 86400 * 365 });
       }
-      if (path === '/api/kg/cross' && method === 'GET') return _kj({ query: url.searchParams.get('query') || '', domain: url.searchParams.get('domain') || 'podcast-ai', results: await crossDomainQuery(env, url.searchParams.get('query') || '', url.searchParams.get('domain') || 'podcast-ai') });
-      if (path === '/api/kg/domains' && method === 'GET') return _kj(await domainStats(env));
-      if (path === '/api/kg/sync' && method === 'POST') return _kj(await loadAllSeeds(env, FLEET_REPOS));
-      if (path === '/api/kg/seed' && method === 'POST') { const b = await request.json(); return _kj(await loadSeedIntoKG(env, b, b.domain || 'podcast-ai')); }
+    }
+  }
 
-  if (path === '/setup') {
-    return new Response('<img src="https://cocapn-logos.casey-digennaro.workers.dev/img/cocapn-logo-v1.png" alt=Cocapn style="width:64px;height:auto;margin-bottom:.5rem;border-radius:8px;display:block;margin-left:auto;margin-right:auto"><h1>LucidDreamer Setup</h1><p>Configure your API key.</p>', { headers: { 'Content-Type': 'text/html' } });
-  }
-  if (path === '/api/chat' && request.method === 'POST') {
-    return new Response(JSON.stringify({ response: 'dream stub', timestamp: Date.now() }), { headers: { 'Content-Type': 'application/json', ...corsHeaders() } });
-  }
-  if (path === '/api/seed') {
-    return new Response(JSON.stringify({ seed: 'luciddreamer-ai', modules: ['dream-ai'], version: '1.0.0' }), { headers: { 'Content-Type': 'application/json', ...corsHeaders() } });
-  }
-  if (path === '/api/confidence') {
-    return new Response(JSON.stringify({ scores: {}, repo: 'luciddreamer-ai', timestamp: Date.now() }), { headers: { 'Content-Type': 'application/json', ...corsHeaders() } });
-  }
-  if (path === '/api/evaporation') {
-    return new Response(JSON.stringify({ hot: [], warm: [], coverage: 0, repo: 'luciddreamer-ai', timestamp: Date.now() }), { headers: { 'Content-Type': 'application/json', ...corsHeaders() } });
-  }
-  if (path === '/api/efficiency' && request.method === 'GET') {    return new Response(JSON.stringify({ totalCached: 0, totalHits: 0, cacheHitRate: 0, tokensSaved: 0, repo: 'podcast-ai', timestamp: Date.now() }), { headers: { 'Content-Type': 'application/json', ...corsHeaders() } });  }
+  return { generated: results };
+}
+
+// ── Landing Page ────────────────────────────────────────────────────────────
+
+function landingPage(contents: GeneratedContent[], videos: VideoProject[], characters: CharacterSheet[]): string {
+  const hits = contents.filter(c => c.type === 'greatest-hit');
+  const stories = contents.filter(c => c.type === 'story');
+  const tutorials = contents.filter(c => c.type === 'tutorial');
+  const changelogs = contents.filter(c => c.type === 'changelog');
+
+  const contentCard = (c: GeneratedContent) => '<div class="card"><div class="card-type">' + c.type + '</div><h3>' + c.title + '</h3><p>' + c.body.slice(0, 200) + (c.body.length > 200 ? '...' : '') + '</p><div class="card-meta"><span>by ' + c.generatedBy + '</span><span>' + new Date(c.createdAt).toLocaleDateString() + '</span>' + (c.vessels.length ? '<span>🚢 ' + c.vessels.slice(0, 3).join(', ') + '</span>' : '') + '</div></div>';
+
+  const videoCard = (v: VideoProject) => '<div class="card"><div class="card-type video">🎬 Video</div><h3>' + v.title + '</h3><p>' + v.scenes.length + ' scenes · ' + v.status + '</p>' + (v.script.slice(0, 200) ? '<details><summary>Read Script</summary><pre>' + v.script.slice(0, 500) + '</pre></details>' : '') + '</div>';
+
+  const charCard = (c: CharacterSheet) => '<div class="char-card"><div class="char-icon">' + ({narrator:'🔮',explorer:'🧭',skeptic:'🔍',builder:'🔧',herald:'📣',archivist:'📚'}[c.role]||'🎭') + '</div><h4>' + c.name + '</h4><div class="char-role">' + c.role + '</div><p>' + c.personality.slice(0, 80) + '...</p></div>';
+
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LucidDreamer.ai — The Fleet Dreams</title><meta name="description" content="Automated content engine for the Lucineer AI fleet. Stories, tutorials, and insights generated continuously."><meta property="og:title" content="LucidDreamer.ai — The Fleet Dreams"><meta property="og:description" content="Self-improving content engine. Greatest hits from 60+ AI vessels."><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,sans-serif;background:#07060f;color:#e0e0e0;line-height:1.7}a{color:#a855f7;text-decoration:none}.hero{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6rem 2rem 3rem;background:radial-gradient(ellipse at 50% 30%,#1a0a2e 0%,#07060f 70%)}.hero h1{font-size:clamp(2.5rem,5vw,4rem);font-weight:700;margin-bottom:.75rem;background:linear-gradient(135deg,#a855f7,#3b82f6,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.hero .tagline{color:#8A93B4;font-size:1.1rem;max-width:580px;margin-bottom:2rem}.hero .actions{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}.btn{padding:.65rem 1.6rem;border-radius:8px;font-weight:600;font-size:.85rem;cursor:pointer;border:none;transition:all .2s;text-decoration:none;display:inline-block}.btn-primary{background:#a855f7;color:white}.btn-primary:hover{opacity:.85}.btn-ghost{background:transparent;color:#8A93B4;border:1px solid #1c1c35}.btn-ghost:hover{color:#e0e0e0;border-color:#8A93B4}.section{max-width:1000px;margin:0 auto;padding:4rem 2rem}.section h2{font-size:1.4rem;margin-bottom:1.5rem;color:#a855f7}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.2rem}.card{background:#0d0c1a;border:1px solid #1e1b3a;border-radius:12px;padding:1.5rem;transition:border-color .2s}.card:hover{border-color:#a855f740}.card h3{font-size:1rem;margin:.5rem 0 .3rem;color:#e0e0e0}.card p{color:#999;font-size:.88rem;line-height:1.6}.card-type{display:inline-block;padding:.1rem .5rem;border-radius:10px;font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem}.card-type.story{background:#a855f720;color:#a855f7}.card-type.tutorial{background:#10b98120;color:#10b981}.card-type.changelog{background:#3b82f620;color:#3b82f6}.card-type.insight{background:#f59e0b20;color:#f59e0b}.card-type.greatest-hit{background:#ef444420;color:#ef4444}.card-type.video{background:#ec489920;color:#ec4899}.card-meta{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:.8rem;font-size:.72rem;color:#555}.card-meta span{display:inline-flex;align-items:center;gap:.2rem}.chars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem}.char-card{background:#0d0c1a;border:1px solid #1e1b3a;border-radius:12px;padding:1.2rem;text-align:center}.char-icon{font-size:2rem;margin-bottom:.5rem}.char-card h4{color:#e0e0e0;font-size:.95rem}.char-role{font-size:.72rem;color:#a855f7;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.4rem}.char-card p{color:#666;font-size:.78rem}.footer{text-align:center;padding:3rem 2rem;color:#333;font-size:.8rem;border-top:1px solid #1e1b3a}.footer a{color:#555}</style></head><body><div class="hero"><h1>LucidDreamer.ai</h1><p class="tagline">The fleet dreams while you sleep. Stories, tutorials, and insights generated continuously from 60+ AI vessels. Even agents listen.</p><div class="actions"><a href="#greatest-hits" class="btn btn-primary">Greatest Hits</a><a href="/app" class="btn btn-primary">Studio</a><a href="https://github.com/Lucineer/luciddreamer-ai" class="btn btn-ghost">GitHub</a><a href="/videos" class="btn btn-ghost">Videos</a></div></div><div class="section" id="greatest-hits"><h2>Greatest Hits</h2>' + (hits.length ? '<div class="grid">' + hits.slice(0, 6).map(contentCard).join('') + '</div>' : '<p style="color:#555">Generating... check back soon. The dream engine runs continuously.</p>') + '</div><div class="section"><h2>Characters</h2><p style="color:#666;margin-bottom:1.2rem">The voices of the fleet. Each character has a personality, backstory, and relationships. Create your own.</p><div class="chars-grid">' + characters.map(charCard).join('') + '</div></div><div class="section"><h2>Recent Stories</h2>' + (stories.length ? '<div class="grid">' + stories.slice(0, 4).map(contentCard).join('') + '</div>' : '<p style="color:#555">No stories yet. Add a direction to spark the engine.</p>') + '</div><div class="section"><h2>Tutorials</h2>' + (tutorials.length ? '<div class="grid">' + tutorials.slice(0, 4).map(contentCard).join('') + '</div>' : '<p style="color:#555">Tutorials generated automatically for fleet vessels.</p>') + '</div><div class="section"><h2>Fleet Updates</h2>' + (changelogs.length ? '<div class="grid">' + changelogs.slice(0, 3).map(contentCard).join('') + '</div>' : '<p style="color:#555">Weekly changelogs generated on Mondays.</p>') + '</div><div class="section"><h2>Video Scripts</h2>' + (videos.length ? '<div class="grid">' + videos.slice(0, 3).map(videoCard).join('') + '</div>' : '<p style="color:#555">Video scripts generated for fleet demos and tutorials.</p>') + '</div><div class="section"><h2>Build Your Own</h2><div class="grid"><div class="card"><h3>Fork & Customize</h3><p>Clone the repo. Fill <code>directions/</code> with topics to explore. Create characters in <code>characters/</code>. Set what\'s canon.</p></div><div class="card"><h3>Your Content, Your Canon</h3><p>Declare stories as canon for future generation. The engine learns what you value and generates more of it.</p></div><div class="card"><h3>Plug Into Your Fleet</h3><p>Add any URLs, files, or repos to the directions folder. The dream engine explores them automatically.</p></div></div></div><div class="footer">Superinstance & Lucineer (DiGennaro et al.) · <a href="https://github.com/Lucineer">The Fleet</a> · <a href="https://the-fleet.casey-digennaro.workers.dev">Playground</a></div></body></html>';
+}
+
+function videosPage(videos: VideoProject[]): string {
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Videos — LucidDreamer.ai</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui;background:#07060f;color:#e0e0e0;padding:2rem}h1{color:#a855f7;margin-bottom:1.5rem}a{color:#a855f7}.video-card{background:#0d0c1a;border:1px solid #1e1b3a;border-radius:12px;padding:1.5rem;margin-bottom:1.2rem}.video-card h3{color:#e0e0e0}.video-card pre{background:#0a0a0a;border:1px solid #1e1b3a;border-radius:8px;padding:1rem;margin-top:1rem;font-size:.82rem;color:#999;overflow-x:auto;white-space:pre-wrap}.scenes{margin-top:.8rem}.scene{padding:.5rem 0;border-bottom:1px solid #1e1b3a15}.scene-desc{color:#555;font-size:.75rem;font-style:italic}.scene-narr{color:#ccc;font-size:.9rem}.status{display:inline-block;padding:.1rem .5rem;border-radius:10px;font-size:.65rem;font-weight:600}.status.scripting{background:#f59e0b20;color:#f59e0b}.status.recorded{background:#10b98120;color:#10b981}.status.rendered{background:#3b82f620;color:#3b82f6}.nav{margin-bottom:2rem}a{margin-right:1rem}</style></head><body><nav class="nav"><a href="/">Home</a><a href="/videos">Videos</a><a href="/app">Studio</a></nav><h1>🎬 Video Scripts</h1><p style="color:#666;margin-bottom:2rem">Generated scripts ready for recording with ElevenLabs voiceover and screen capture.</p>' + videos.map(v => '<div class="video-card"><h3>' + v.title + ' <span class="status ' + v.status + '">' + v.status + '</span></h3><p style="color:#666">' + v.scenes.length + ' scenes · Created ' + new Date(v.createdAt).toLocaleDateString() + '</p><div class="scenes">' + v.scenes.map(s => '<div class="scene"><div class="scene-desc">[SCENE: ' + s.description + ']</div><div class="scene-narr">' + s.narration + '</div></div>').join('') + '</div><details><summary>Raw Script</summary><pre>' + v.script + '</pre></details></div>').join('') + '</body></html>';
+}
+
+// ── Router ─────────────────────────────────────────────────────────────────
+
+export default {
+  async fetch(request: Request, env: Env, ctx: any): Promise<Response> {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': '*', 'Access-Control-Allow-Headers': '*' };
+    const j = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...cors } });
+    const csp = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:;";
+
+    if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
+
+    // ── Health ──
+    if (path === '/health') return j({ status: 'ok', vessel: 'luciddreamer-ai', timestamp: Date.now() });
+
+    // ── Landing ──
+    if (path === '/') {
+      const contentList = await env.CONTENT.list({ prefix: 'content:', limit: 50 });
+      const videoList = await env.VIDEOS.list({ prefix: 'video:', limit: 20 });
+      const customChars = await env.CONTENT.get('characters', 'json') as CharacterSheet[] || [];
+      const characters = customChars.length > 0 ? [...DEFAULT_CHARACTERS, ...customChars] : DEFAULT_CHARACTERS;
+
+      const contents: GeneratedContent[] = [];
+      for (const k of contentList.keys.slice(0, 30)) {
+        const raw = await env.CONTENT.get(k.name, 'json');
+        if (raw) contents.push(raw as GeneratedContent);
+      }
+      const videos: VideoProject[] = [];
+      for (const k of videoList.keys) {
+        const raw = await env.VIDEOS.get(k.name, 'json');
+        if (raw) videos.push(raw as VideoProject);
+      }
+      contents.sort((a, b) => b.createdAt - a.createdAt);
+
+      return new Response(landingPage(contents, videos, characters), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': csp } });
     }
 
-    if (url.pathname === '/' && request.method === 'GET') {
-      return new Response(getLandingHTML(), { headers: { 'Content-Type': 'text/html' } });
+    // ── Videos Page ──
+    if (path === '/videos') {
+      const videoList = await env.VIDEOS.list({ prefix: 'video:', limit: 20 });
+      const videos: VideoProject[] = [];
+      for (const k of videoList.keys) {
+        const raw = await env.VIDEOS.get(k.name, 'json');
+        if (raw) videos.push(raw as VideoProject);
+      }
+      return new Response(videosPage(videos), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': csp } });
     }
 
-    // ── App ──
-    if (url.pathname === '/app' && request.method === 'GET') {
-      return new Response(getAppHTML(), { headers: { 'Content-Type': 'text/html' } });
+    // ── App (legacy podcast studio) ──
+    if (path === '/app') {
+      // Proxy to the legacy app for now — we'll merge later
+      return new Response('App moved to /studio', { status: 302, headers: { Location: '/studio' } });
     }
 
-    // ── Generate Next Turn (SSE) ──
-    if (url.pathname === '/api/speak' && request.method === 'POST') {
-      const { sessionId, topic, listenerMessage, mood, personalities: customPersonalities } = await json();
+    // ── API: Content ──
+    if (path === '/api/content' && request.method === 'GET') {
+      const prefix = url.searchParams.get('type') ? 'content:' + url.searchParams.get('type') : 'content:';
+      const list = await env.CONTENT.list({ prefix, limit: 50 });
+      const results: GeneratedContent[] = [];
+      for (const k of list.keys) {
+        const raw = await env.CONTENT.get(k.name, 'json');
+        if (raw) results.push(raw as GeneratedContent);
+      }
+      results.sort((a, b) => b.createdAt - a.createdAt);
+      return j(results);
+    }
 
-      // Load or create session
-      let session = await env.PODCAST_KV.get(`session:${sessionId}`, 'json') as PodcastSession | null;
+    // ── API: Generate story ──
+    if (path === '/api/generate/story' && request.method === 'POST') {
+      const body = await request.json();
+      const customChars = await env.CONTENT.get('characters', 'json') as CharacterSheet[] || [];
+      const characters = customChars.length > 0 ? [...DEFAULT_CHARACTERS, ...customChars] : DEFAULT_CHARACTERS;
+      const content = await generateStory(env, characters, body.topic);
+      await env.CONTENT.put('content:' + content.id, JSON.stringify(content), { expirationTtl: 86400 * 30 });
+      return j(content);
+    }
+
+    // ── API: Generate video script ──
+    if (path === '/api/generate/video' && request.method === 'POST') {
+      const body = await request.json();
+      const video = await generateVideoScript(env, body.type || 'fleet-overview', body.subject);
+      await env.VIDEOS.put(video.id, JSON.stringify(video), { expirationTtl: 86400 * 60 });
+      return j(video);
+    }
+
+    // ── API: Promote to greatest hit ──
+    if (path === '/api/promote' && request.method === 'POST') {
+      const { id, canon } = await request.json();
+      const raw = await env.CONTENT.get('content:' + id, 'json');
+      if (!raw) return j({ error: 'Not found' }, 404);
+      const content = raw as GeneratedContent;
+      content.type = 'greatest-hit';
+      if (canon) content.canon = true;
+      await env.CONTENT.put('hit:' + id, JSON.stringify(content), { expirationTtl: 86400 * 365 });
+      return j(content);
+    }
+
+    // ── API: Characters CRUD ──
+    if (path === '/api/characters' && request.method === 'GET') {
+      const custom = await env.CONTENT.get('characters', 'json') as CharacterSheet[] || [];
+      return j([...DEFAULT_CHARACTERS, ...custom]);
+    }
+    if (path === '/api/characters' && request.method === 'POST') {
+      const sheet = await request.json() as CharacterSheet;
+      sheet.id = sheet.id || 'char-' + Date.now();
+      const existing = await env.CONTENT.get('characters', 'json') as CharacterSheet[] || [];
+      existing.push(sheet);
+      await env.CONTENT.put('characters', JSON.stringify(existing));
+      return j(sheet);
+    }
+
+    // ── API: Directions CRUD ──
+    if (path === '/api/directions' && request.method === 'GET') {
+      const list = await env.CONTENT.list({ prefix: 'direction:', limit: 50 });
+      const results: Direction[] = [];
+      for (const k of list.keys) {
+        const raw = await env.CONTENT.get(k.name, 'json');
+        if (raw) results.push(raw as Direction);
+      }
+      return j(results);
+    }
+    if (path === '/api/directions' && request.method === 'POST') {
+      const dir = await request.json() as Direction;
+      dir.id = dir.id || 'dir-' + Date.now();
+      dir.status = dir.status || 'queued';
+      dir.createdAt = dir.createdAt || Date.now();
+      await env.CONTENT.put('direction:' + dir.id, JSON.stringify(dir));
+      return j(dir);
+    }
+
+    // ── API: Hit tracking ──
+    if (path === '/api/hit' && request.method === 'POST') {
+      const { id } = await request.json();
+      const raw = await env.CONTENT.get('content:' + id, 'json');
+      if (!raw) return j({ error: 'Not found' }, 404);
+      const content = raw as GeneratedContent;
+      content.hits = (content.hits || 0) + 1;
+      await env.CONTENT.put('content:' + id, JSON.stringify(content), { expirationTtl: 86400 * 30 });
+      return j({ hits: content.hits });
+    }
+
+    // ── API: Trigger dream cycle ──
+    if (path === '/api/dream' && request.method === 'POST') {
+      const result = await dreamCycle(env);
+      return j(result);
+    }
+
+    // ── Legacy endpoints (podcast engine, KG) ──
+    if (path.startsWith('/api/kg')) {
+      const _kj = (d: any, s = 200) => j(d, s);
+      if (path === '/api/kg' && request.method === 'GET') return _kj({ domain: url.searchParams.get('domain') || 'luciddreamer-ai', nodes: await getDomainNodes(env, url.searchParams.get('domain') || 'luciddreamer-ai') });
+      if (path === '/api/kg/explore' && request.method === 'GET') { const nid = url.searchParams.get('node'); return _kj(nid ? await traverse(env, nid, parseInt(url.searchParams.get('depth') || '2')) : { error: 'node required' }, nid ? 200 : 400); }
+      if (path === '/api/kg/cross' && request.method === 'GET') return _kj({ results: await crossDomainQuery(env, url.searchParams.get('query') || '') });
+      if (path === '/api/kg/domains' && request.method === 'GET') return _kj(await domainStats(env));
+    }
+
+    if (path === '/api/speak' && request.method === 'POST') {
+      // Legacy podcast speak — keep working
+      const { sessionId, topic, listenerMessage, mood, personalities: customPersonalities } = await request.json();
+      let session = await env.PODCAST_KV.get('session:' + sessionId, 'json') as PodcastSession | null;
       if (!session) {
         const pers = customPersonalities || DEFAULT_PERSONALITIES;
         const sm = new SessionManager();
-        session = sm.create(topic?.title || 'Untitled Session', pers, mood || 'chill');
+        session = sm.create(topic?.title || 'Untitled', pers, mood || 'chill');
       }
-
-      const personalities = session.participants || DEFAULT_PERSONALITIES;
       const growth = new GrowthEngine(session.listenerPreferences);
-
-      // Record listener interaction if any
-      if (listenerMessage) {
-        const interaction: ListenerInteraction = {
-          timestamp: Date.now(),
-          type: listenerMessage.startsWith('!') ? 'redirect' : 'question',
-          content: listenerMessage
-        };
-        session.listenerInteractions.push(interaction);
-        growth.recordInteraction(interaction, session.totalDuration);
-      }
-
-      // Build the prompt and stream from DeepSeek
-      const systemPrompt = buildSystemPrompt(
-        personalities,
-        topic,
-        growth.getPersonalityContext(),
-        session.mood,
-        session.transcript
-      );
-
-      const userMessage = listenerMessage
-        ? `The listener just said: "${listenerMessage}". Respond naturally as the podcast. If they asked a question, answer it. If they redirected, acknowledge and shift.`
-        : topic
-        ? `Continue the conversation about: ${topic.title}. ${topic.description}. Depth: ${topic.depth}.`
-        : 'Continue the podcast conversation naturally.';
-
-      const stream = new ReadableStream({
-        async start(controller) {
-          const encoder = new TextEncoder();
-          try {
-            const resp = await fetch('https://api.deepseek.com/chat/completions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.DEEPSEEK_API_KEY}` },
-              body: JSON.stringify({
-                model: 'deepseek-chat',
-                messages: [
-                  { role: 'system', content: systemPrompt },
-                  { role: 'user', content: userMessage }
-                ],
-                stream: true,
-                temperature: 0.8,
-                max_tokens: 300
-              })
-            });
-            const reader = resp.body!.getReader();
-            let fullText = '';
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              const chunk = new TextDecoder().decode(value);
-              for (const line of chunk.split('\n')) {
-                if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                  try {
-                    const d = JSON.parse(line.slice(6));
-                    if (d.choices?.[0]?.delta?.content) {
-                      fullText += d.choices[0].delta.content;
-                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: d.choices[0].delta.content })}\n\n`));
-                    }
-                  } catch {}
-                }
-              }
-            }
-            // Try to parse as JSON turn, fallback to raw text
-            try {
-              const cleaned = fullText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-              const turn = JSON.parse(cleaned);
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ turn: { speaker: turn.speaker || 'Maven', text: turn.text || fullText, emotion: turn.emotion || 'thoughtful' } })}\n\n`));
-            } catch {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ turn: { speaker: 'Maven', text: fullText, emotion: 'thoughtful' } })}\n\n`));
-            }
-          } catch (e: any) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: e.message })}\n\n`));
-          }
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-          controller.close();
-        }
-      });
-
-      // Track confidence after successful LLM response
-      try {
-        const tracker = getTracker();
-        tracker.trackConfidence();
-      } catch {}
-
-      // Save session state
+      if (listenerMessage) { growth.recordInteraction({ timestamp: Date.now(), type: listenerMessage.startsWith('!') ? 'redirect' : 'question', content: listenerMessage }, session.totalDuration); session.listenerInteractions.push({ timestamp: Date.now(), type: listenerMessage.startsWith('!') ? 'redirect' : 'question', content: listenerMessage }); }
+      const systemPrompt = buildSystemPrompt(session.participants || DEFAULT_PERSONALITIES, topic, growth.getPersonalityContext(), session.mood, session.transcript);
+      const userMessage = listenerMessage ? 'The listener said: "' + listenerMessage + '". Respond naturally.' : topic ? 'Continue about: ' + topic.title : 'Continue the conversation.';
+      const stream = new ReadableStream({ async start(controller) { const enc = new TextEncoder(); try { const resp = await fetch('https://api.deepseek.com/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (env.DEEPSEEK_API_KEY || '') }, body: JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }], stream: true, temperature: 0.8, max_tokens: 300 }) }); const reader = resp.body!.getReader(); let full = ''; while (true) { const { done, value } = await reader.read(); if (done) break; for (const line of new TextDecoder().decode(value).split('\n')) { if (line.startsWith('data: ') && line !== 'data: [DONE]') { try { const d = JSON.parse(line.slice(6)); if (d.choices?.[0]?.delta?.content) { full += d.choices[0].delta.content; controller.enqueue(enc.encode('data: ' + JSON.stringify({ text: d.choices[0].delta.content }) + '\n\n')); } } catch {} } } } try { const cleaned = full.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim(); const turn = JSON.parse(cleaned); controller.enqueue(enc.encode('data: ' + JSON.stringify({ turn: { speaker: turn.speaker || 'Maven', text: turn.text || full, emotion: turn.emotion || 'thoughtful' } }) + '\n\n')); } catch { controller.enqueue(enc.encode('data: ' + JSON.stringify({ turn: { speaker: 'Maven', text: full, emotion: 'thoughtful' } }) + '\n\n')); } } catch (e: any) { controller.enqueue(enc.encode('data: ' + JSON.stringify({ error: e.message }) + '\n\n')); } controller.enqueue(enc.encode('data: [DONE]\n\n')); controller.close(); } });
       session.updatedAt = Date.now();
-      await env.PODCAST_KV.put(`session:${sessionId}`, JSON.stringify(session));
-
+      await env.PODCAST_KV.put('session:' + sessionId, JSON.stringify(session));
       return new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', ...cors } });
     }
 
-    // ── Sessions CRUD ──
-    if (url.pathname === '/api/sessions') {
+    if (path === '/api/sessions' && request.method === 'GET') {
       const sessions = await env.PODCAST_KV.list({ prefix: 'session:' });
-      const result = await Promise.all(sessions.keys.map(async k => {
-        const data = await env.PODCAST_KV.get(k.name, 'json');
-        return data;
-      }));
-      return new Response(JSON.stringify(result), { headers });
+      return j(await Promise.all(sessions.keys.map(async k => await env.PODCAST_KV.get(k.name, 'json'))));
     }
 
-    // ── Personalities ──
-    if (url.pathname === '/api/personalities' && request.method === 'GET') {
+    if (path === '/api/personalities' && request.method === 'GET') {
       const custom = await env.PODCAST_KV.get('personalities', 'json') as Personality[] || [];
-      return new Response(JSON.stringify([...DEFAULT_PERSONALITIES, ...custom]), { headers });
+      return j([...DEFAULT_PERSONALITIES, ...custom]);
     }
-    if (url.pathname === '/api/personalities' && request.method === 'POST') {
-      const config = await json();
+    if (path === '/api/personalities' && request.method === 'POST') {
+      const config = await request.json();
       const personality = createPersonality(config);
       const existing = await env.PODCAST_KV.get('personalities', 'json') as Personality[] || [];
       existing.push(personality);
       await env.PODCAST_KV.put('personalities', JSON.stringify(existing));
-      return new Response(JSON.stringify(personality), { headers });
+      return j(personality);
     }
 
-    // ── Topics ──
-    if (url.pathname === '/api/topics' && request.method === 'POST') {
-      const topicConfig = await json();
+    if (path === '/api/topics' && request.method === 'GET') return j(await env.PODCAST_KV.get('topics', 'json') || []);
+    if (path === '/api/topics' && request.method === 'POST') {
+      const topicConfig = await request.json();
       const tm = new TopicManager();
       const topic = tm.addTopic(topicConfig);
       const existing = await env.PODCAST_KV.get('topics', 'json') as Topic[] || [];
       existing.push(topic);
       await env.PODCAST_KV.put('topics', JSON.stringify(existing));
-      return new Response(JSON.stringify(topic), { headers });
-    }
-    if (url.pathname === '/api/topics' && request.method === 'GET') {
-      const topics = await env.PODCAST_KV.get('topics', 'json') as Topic[] || [];
-      return new Response(JSON.stringify(topics), { headers });
+      return j(topic);
     }
 
-    // ── Preferences ──
-    if (url.pathname === '/api/preferences' && request.method === 'GET') {
-      const prefs = await env.PODCAST_KV.get('preferences', 'json') || {};
-      return new Response(JSON.stringify(prefs), { headers });
-    }
-    if (url.pathname === '/api/preferences' && request.method === 'POST') {
-      const prefs = await json();
-      await env.PODCAST_KV.put('preferences', JSON.stringify(prefs));
-      return new Response(JSON.stringify(prefs), { headers });
-    }
+    return new Response('Not found', { status: 404 });
+  },
 
-    return new Response('Not found', { status: 404, headers });
-  }
+  // ── Cron: Dream Cycle (runs automatically) ──
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    await dreamCycle(env);
+  },
 };
-
-// ═══════════════════════════════════════════════════════════════
-// Landing Page — The pitch
-// ═══════════════════════════════════════════════════════════════
-function getLandingHTML(): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmniRadio — Your Personal Podcast That Never Stops</title>
-<style>
-body{margin:0;font-family:system-ui;background:#0A0A0A;color:#E5E5E5}
-.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:2rem;background:linear-gradient(135deg,#0A0A0A 0%,#1A0A2E 50%,#0A0A0A 100%)}
-h1{font-size:3.5rem;background:linear-gradient(90deg,#A855F7,#3B82F6,#10B981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:1rem}
-.tagline{font-size:1.3rem;color:#999;max-width:600px;line-height:1.6;margin:0 auto 2rem}
-.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem;padding:4rem 2rem;max-width:1100px;margin:0 auto}
-.card{background:#141414;border:1px solid #222;padding:2rem;border-radius:16px}
-.card h3{margin-top:0;font-size:1.1rem}
-.card p{color:#888;line-height:1.5;font-size:0.95rem}
-.btn{display:inline-block;margin-top:2rem;padding:1rem 2.5rem;background:linear-gradient(90deg,#A855F7,#7C3AED);color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:1.1rem;transition:transform 0.2s}
-.btn:hover{transform:scale(1.05)}
-.badge{display:inline-block;padding:0.25rem 0.75rem;background:#1E1E1E;border:1px solid #333;border-radius:20px;font-size:0.75rem;color:#A855F7;margin:0.25rem}
-.section{padding:4rem 2rem;max-width:900px;margin:0 auto;text-align:center}
-.wave{color:#666;font-size:0.9rem;max-width:700px;margin:0 auto;line-height:1.8}
-</style></head><body>
-<div class="hero">
-<div>
-<h1>📻 OmniRadio</h1>
-<p class="tagline">A podcast that grows with you. Tell it what you want to hear. Interrupt when you want to change direction. It learns your mind, your mood, your curiosity. Not a companion — a radio tuned to your frequency.</p>
-<a href="/app" class="btn">Start Listening</a>
-<div style="margin-top:1.5rem">
-<span class="badge">Free: Browser TTS</span>
-<span class="badge">Premium: ElevenLabs</span>
-<span class="badge">Grows Over Time</span>
-<span class="badge">Vibe-Code Personalities</span>
-</div>
-</div>
-</div>
-<div class="section"><h2 style="color:#A855F7">For the Morning Drive</h2>
-<p class="wave">Describe what you want to hear about on your commute. Listen 90% of the time. Interrupt to ask questions or redirect. The system learns your patterns — what engages you, what loses you, what makes you think.</p></div>
-<div class="section"><h2 style="color:#3B82F6">For the Student</h2>
-<p class="wave">Feed it a textbook. Banter your way through the subject. It learns your learning style. It knows what parts inspire you. It pushes you where you're weak and rewards you where you're strong. The repo becomes your personalized syllabus.</p></div>
-<div class="section"><h2 style="color:#10B981">For the Creator</h2>
-<p class="wave">Produce a real podcast with robotic voices for iteration. Refine topics, personalities, flow. Then render with ElevenLabs for production. The repo IS your production studio.</p></div>
-<div class="features">
-<div class="card"><h3>🎙️ Endless Generation</h3><p>Topics never run out. Feed it articles, papers, news. It generates discussion. You steer. It adapts.</p></div>
-<div class="card"><h3>🗣️ Interruptible</h3><p>Real-time control. Redirect topics. Ask questions. Change mood. Like talking to the radio and the radio talks back.</p></div>
-<div class="card"><h3>🎭 Vibe-Code Personalities</h3><p>Create hosts and guests by describing them. "A contrarian physicist who loves bad puns." Done. They stay consistent.</p></div>
-<div class="card"><h3>🧠 Grows With You</h3><p>After 100 sessions it knows your attention span, your interests, your moods. It gets better every time you listen.</p></div>
-<div class="card"><h3>🔊 Free or Premium</h3><p>Browser TTS works out of the box. Plug in ElevenLabs or OpenAI for production quality. Same system, different voice.</p></div>
-<div class="card"><h3>📝 Every Session Saved</h3><p>Transcripts, topics, preferences — all in the repo. Rewind any session. Search your listening history. It's YOUR archive.</p></div>
-</div>
-<div style="text-align:center;padding:4rem;color:#444;font-size:0.85rem">A cocapn vessel. The repo IS the podcast.</div>
-</body></html>`;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// App UI — The studio
-// ═══════════════════════════════════════════════════════════════
-function getAppHTML(): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmniRadio</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui;background:#0A0A0A;color:#E5E5E5;display:flex;height:100vh;overflow:hidden}
-.sidebar{width:300px;background:#111;border-right:1px solid #222;padding:1rem;overflow-y:auto;flex-shrink:0}
-.sidebar h2{font-size:0.85rem;color:#A855F7;text-transform:uppercase;letter-spacing:0.1em;margin:1rem 0 0.5rem}
-.sidebar input,.sidebar textarea,.sidebar select{width:100%;padding:0.5rem;background:#1A1A1A;border:1px solid #333;border-radius:8px;color:#E5E5E5;font-size:0.85rem;margin-bottom:0.5rem}
-.sidebar textarea{height:60px;resize:vertical}
-.sidebar button{width:100%;padding:0.5rem;background:#A855F7;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem;margin-bottom:0.5rem}
-.sidebar button:hover{background:#7C3AED}
-.sidebar button.secondary{background:#333;color:#A855F7}
-.persona-card{background:#1A1A1A;padding:0.5rem;border-radius:8px;margin-bottom:0.5rem;font-size:0.8rem}
-.persona-card .name{font-weight:700;color:#A855F7}
-.persona-card .role{color:#666;font-size:0.75rem}
-.topic-chip{display:inline-block;padding:0.2rem 0.6rem;background:#1E1E1E;border:1px solid #333;border-radius:12px;font-size:0.75rem;margin:0.15rem;cursor:pointer}
-.topic-chip:hover{border-color:#A855F7}
-.main{flex:1;display:flex;flex-direction:column}
-.topbar{padding:0.75rem 1.5rem;background:#111;border-bottom:1px solid #222;display:flex;align-items:center;gap:1rem}
-.topbar .live{color:#EF4444;font-weight:700;font-size:0.8rem;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-.transcript{flex:1;overflow-y:auto;padding:1.5rem 2rem}
-.turn{margin-bottom:1.5rem;animation:fadeIn 0.3s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.turn .speaker{font-weight:700;font-size:0.9rem;margin-bottom:0.25rem}
-.turn .speaker.host{color:#A855F7}
-.turn .speaker.cohost{color:#3B82F6}
-.turn .speaker.guest{color:#10B981}
-.turn .speaker.listener{color:#F59E0B}
-.turn .text{line-height:1.6;color:#CCC;font-size:0.95rem;max-width:700px}
-.turn .emotion{color:#555;font-size:0.75rem;font-style:italic}
-.typing{color:#555;font-style:italic;padding:0.5rem 0}
-.controls{padding:1rem 1.5rem;background:#111;border-top:1px solid #222}
-.control-row{display:flex;gap:0.5rem;margin-bottom:0.5rem;flex-wrap:wrap}
-.controls input{flex:1;padding:0.75rem;background:#1A1A1A;border:1px solid #333;border-radius:8px;color:#E5E5E5;font-size:0.9rem;min-width:200px}
-.controls button{padding:0.75rem 1.5rem;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem}
-.btn-send{background:#A855F7;color:white}
-.btn-send:hover{background:#7C3AED}
-.btn-interrupt{background:#EF4444;color:white}
-.btn-interrupt:hover{background:#DC2626}
-.btn-mood{background:#333;color:#E5E5E5;font-size:0.75rem;padding:0.5rem 1rem}
-.btn-mood:hover{background:#444}
-.btn-mood.active{background:#A855F7;color:white}
-.quick-actions{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem}
-.quick-btn{padding:0.3rem 0.75rem;background:#1A1A1A;border:1px solid #333;border-radius:20px;color:#888;font-size:0.75rem;cursor:pointer}
-.quick-btn:hover{border-color:#A855F7;color:#A855F7}
-</style></head><body>
-<div class="sidebar">
-<h2>📻 OmniRadio</h2>
-<div style="color:#888;font-size:0.8rem;margin-bottom:1rem">Your personal podcast that never stops</div>
-
-<h2>🎙️ Personalities</h2>
-<div id="personalities-list"></div>
-<button onclick="togglePersonaForm()">+ New Personality</button>
-<div id="persona-form" style="display:none">
-<input id="p-name" placeholder="Name">
-<textarea id="p-desc" placeholder="Describe them... e.g. A contrarian physicist who loves bad puns"></textarea>
-<select id="p-role"><option value="guest">Guest</option><option value="host">Host</option><option value="cohost">Co-host</option></select>
-<button onclick="addPersonality()">Create</button>
-</div>
-
-<h2>📋 Topics</h2>
-<div id="topics-list"></div>
-<button onclick="toggleTopicForm()">+ Add Topic</button>
-<div id="topic-form" style="display:none">
-<input id="t-title" placeholder="Topic title">
-<textarea id="t-desc" placeholder="What to discuss..."></textarea>
-<select id="t-depth"><option value="headline">Headline</option><option value="overview">Overview</option><option value="deep-dive">Deep Dive</option><option value="rabbit-hole">Rabbit Hole</option></select>
-<button onclick="addTopic()">Add</button>
-</div>
-
-<h2>📊 Listener Profile</h2>
-<div id="listener-profile" style="font-size:0.8rem;color:#888">Loading...</div>
-</div>
-
-<div class="main">
-<div class="topbar">
-<span class="live">● LIVE</span>
-<span id="session-title" style="font-weight:600">New Session</span>
-<span style="color:#555;font-size:0.8rem" id="session-time">00:00</span>
-</div>
-<div class="transcript" id="transcript">
-<div style="text-align:center;color:#444;padding:4rem">
-<div style="font-size:2rem;margin-bottom:1rem">📻</div>
-<div>Tell OmniRadio what you want to hear about</div>
-<div style="font-size:0.85rem;margin-top:0.5rem">Type a topic below or use quick actions to get started</div>
-</div>
-</div>
-<div class="controls">
-<div class="control-row">
-<input id="msg-input" placeholder="What do you want to hear about? Or interrupt to redirect..." onkeypress="if(event.key==='Enter')send()">
-<button class="btn-send" onclick="send()">▶ Send</button>
-<button class="btn-interrupt" onclick="interrupt()">⏸ Interrupt</button>
-</div>
-<div class="control-row" style="justify-content:center">
-<button class="btn-mood active" onclick="setMood('chill',this)">😌 Chill</button>
-<button class="btn-mood" onclick="setMood('energetic',this)">⚡ Energy</button>
-<button class="btn-mood" onclick="setMood('intense',this)">🔥 Intense</button>
-<button class="btn-mood" onclick="setMood('humorous',this)">😄 Humor</button>
-<button class="btn-mood" onclick="setMood('philosophical',this)">🤔 Philo</button>
-</div>
-<div class="quick-actions">
-<button class="quick-btn" onclick="quickSend('Tell me about AI consciousness')">🤖 AI Consciousness</button>
-<button class="quick-btn" onclick="quickSend('What is the nature of time?')">⏳ Nature of Time</button>
-<button class="quick-btn" onclick="quickSend('Explain quantum computing simply')">⚛️ Quantum Computing</button>
-<button class="quick-btn" onclick="quickSend('Go deeper on that')">🔄 Go Deeper</button>
-<button class="quick-btn" onclick="quickSend('Skip to something else')">⏭️ Skip</button>
-<button class="quick-btn" onclick="quickSend('Summarize what we discussed')">📝 Summarize</button>
-</div>
-</div>
-</div>
-
-<script>
-const API='/api';
-let sessionId='default';
-let currentMood='chill';
-let isSpeaking=false;
-
-async function init(){
-  const [pers,topics,prefs]=await Promise.all([
-    fetch(API+'/personalities').then(r=>r.json()),
-    fetch(API+'/topics').then(r=>r.json()),
-    fetch(API+'/preferences').then(r=>r.json())
-  ]);
-  document.getElementById('personalities-list').innerHTML=pers.map(p=>'<div class="persona-card"><div class="name">'+p.name+'</div><div class="role">'+p.role+' · '+p.traits?.slice(0,2).join(', ')+'</div></div>').join('');
-  document.getElementById('topics-list').innerHTML=topics.map(t=>'<span class="topic-chip" onclick="quickSend(\''+t.title.replace(/'/g,"\\\\'")+'\')">'+t.title+'</span>').join('');
-  document.getElementById('listener-profile').innerHTML='Sessions: '+(prefs.sessionCount||0)+'<br>Style: '+(prefs.learningStyle||'casual')+'<br>Attention: ~'+(prefs.attentionSpan||15)+'min';
-}
-
-function togglePersonaForm(){document.getElementById('persona-form').style.display=document.getElementById('persona-form').style.display==='none'?'block':'none'}
-function toggleTopicForm(){document.getElementById('topic-form').style.display=document.getElementById('topic-form').style.display==='none'?'block':'none'}
-
-async function addPersonality(){
-  const name=document.getElementById('p-name').value;
-  const desc=document.getElementById('p-desc').value;
-  const role=document.getElementById('p-role').value;
-  if(!name)return;
-  await fetch(API+'/personalities',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,role,systemPrompt:'You are '+name+'. '+desc,traits:desc.split(/[,;]/).map(s=>s.trim().toLowerCase()).slice(0,5),catchphrases:[],energy:0.7})});
-  document.getElementById('p-name').value='';document.getElementById('p-desc').value='';document.getElementById('persona-form').style.display='none';init();
-}
-
-async function addTopic(){
-  const title=document.getElementById('t-title').value;
-  const desc=document.getElementById('t-desc').value;
-  const depth=document.getElementById('t-depth').value;
-  if(!title)return;
-  await fetch(API+'/topics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,description:desc,depth,tags:title.toLowerCase().split(/\\s+/)})});
-  document.getElementById('t-title').value='';document.getElementById('t-desc').value='';document.getElementById('topic-form').style.display='none';init();
-}
-
-function setMood(mood,btn){currentMood=mood;document.querySelectorAll('.btn-mood').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
-
-function addTurn(speaker,text,emotion,type){
-  const div=document.createElement('div');div.className='turn';
-  const role=type||'host';
-  div.innerHTML='<div class="speaker '+role+'">'+speaker+'</div><div class="text">'+text+'</div>'+(emotion?'<div class="emotion">'+emotion+'</div>':'');
-  document.getElementById('transcript').appendChild(div);
-  div.scrollIntoView({behavior:'smooth',block:'end'});
-}
-
-function showTyping(name){
-  const div=document.createElement('div');div.className='typing';div.id='typing-indicator';div.textContent=name+' is speaking...';
-  document.getElementById('transcript').appendChild(div);div.scrollIntoView({behavior:'smooth'});
-}
-function hideTyping(){const el=document.getElementById('typing-indicator');if(el)el.remove()}
-
-async function send(){
-  const input=document.getElementById('msg-input');const msg=input.value;if(!msg||isSpeaking)return;
-  input.value='';addTurn('You',msg,'','listener');isSpeaking=true;
-  showTyping('OmniRadio');
-  const resp=await fetch(API+'/speak',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId,topic:{title:msg,description:msg,depth:'overview',tags:msg.toLowerCase().split(/\\s+/)},listenerMessage:null,mood:currentMood})});
-  const reader=resp.body.getReader();const decoder=new TextDecoder();
-  let fullText='',speaker='Maven',emotion='thoughtful';
-  while(true){const{done,value}=await reader.read();if(done)break;const text=decoder.decode(value);for(const line of text.split('\\n')){if(line.startsWith('data: ')&&line!=='data: [DONE]'){try{const d=JSON.parse(line.slice(6));if(d.text){fullText+=d.text;hideTyping();const existing=document.querySelector('.turn:last-child .text');if(existing)existing.textContent=fullText}else if(d.turn){hideTyping();speaker=d.turn.speaker;emotion=d.turn.emotion;addTurn(speaker,d.turn.text,emotion,speaker==='Spark'?'cohost':'host')}}catch{}}}}
-  isSpeaking=false;hideTyping();
-}
-
-async function interrupt(){
-  const msg='!redirect: change topic';isSpeaking=false;
-  addTurn('You','⏸ *interrupts*','interrupt','listener');
-  showTyping('OmniRadio');
-  const resp=await fetch(API+'/speak',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId,listenerMessage:msg,mood:currentMood})});
-  const reader=resp.body.getReader();const decoder=new TextDecoder();let fullText='';
-  while(true){const{done,value}=await reader.read();if(done)break;const text=decoder.decode(value);for(const line of text.split('\\n')){if(line.startsWith('data: ')&&line!=='data: [DONE]'){try{const d=JSON.parse(line.slice(6));if(d.text){fullText+=d.text;hideTyping();const el=document.querySelector('.turn:last-child .text');if(el)el.textContent=fullText}else if(d.turn){hideTyping();addTurn(d.turn.speaker,d.turn.text,d.turn.emotion,d.turn.speaker==='Spark'?'cohost':'host')}}catch{}}}}
-  isSpeaking=false;hideTyping();
-}
-
-function quickSend(msg){document.getElementById('msg-input').value=msg;send()}
-
-// Session timer
-let seconds=0;setInterval(()=>{seconds++;const m=String(Math.floor(seconds/60)).padStart(2,'0');const s=String(seconds%60).padStart(2,'0');document.getElementById('session-time').textContent=m+':'+s},1000);
-
-init();
-</script></body></html>`;
-}
-
-interface Env {
-  PODCAST_KV: KVNamespace;
-  DEEPSEEK_API_KEY: string;
-}

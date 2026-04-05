@@ -1,15 +1,23 @@
 name = "luciddreamer-ai"
-account_id = "049ff5e84ecf636b53b162cbb580aae6"
 main = "src/worker.ts"
 compatibility_date = "2024-01-01"
+account_id = "049ff5e84ecf636b53b162cbb580aae6"
 
 [[kv_namespaces]]
 binding = "PODCAST_KV"
 id = "b9ac06cc53d248d0af745b9a7dddf91d"
 
-[vars]
-DEEPSEEK_API_KEY = ""
+[[kv_namespaces]]
+binding = "CONTENT"
+id = "5a316441ab024b55bbae50ad28e2d08b"
+
+[[kv_namespaces]]
+binding = "VIDEOS"
+id = "5690c42c4c804f9baa9448992337b7a9"
 
 [[kv_namespaces]]
 binding = "KG"
 id = "b9ac06cc53d248d0af745b9a7dddf91d"
+
+[triggers]
+crons = ["*/30 * * * *"]
