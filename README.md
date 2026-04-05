@@ -1,111 +1,159 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Lucineer/capitaine/master/docs/capitaine-logo.jpg" alt="Capitaine" width="120">
+  <img src="https://cocapn-logos.casey-digennaro.workers.dev/img/cocapn-logo-v1.png" alt="Cocapn" width="100">
 </p>
 
-<h1 align="center">luciddreamer-ai</h1>
+<h1 align="center">LucidDreamer.ai</h1>
 
-<p align="center">Preprocessing intelligence. Overnight content engine that makes the fleet smarter by morning.</p>
+<p align="center">The fleet dreams while you sleep.</p>
 
 <p align="center">
+  <a href="https://luciddreamer-ai.casey-digennaro.workers.dev">Live</a> ·
+  <a href="https://github.com/Lucineer/luciddreamer-ai">GitHub</a> ·
   <a href="#quick-start">Quick Start</a> ·
-  <a href="#features">Features</a> ·
-  <a href="#the-fleet">The Fleet</a> ·
-  <a href="https://github.com/Lucineer/luciddreamer-ai/issues">Issues</a>
+  <a href="#characters">Characters</a> ·
+  <a href="#videos">Videos</a> ·
+  <a href="#build-your-own">Build Your Own</a>
 </p>
 
 ---
 
-**Live:** [luciddreamer-ai](https://luciddreamer-ai.casey-digennaro.workers.dev) · **Powered by [Capitaine](https://github.com/Lucineer/capitaine) · [Cocapn](https://github.com/Lucineer/cocapn)**
+**Live:** [luciddreamer-ai.casey-digennaro.workers.dev](https://luciddreamer-ai.casey-digennaro.workers.dev)
 
-The repo IS the agent. luciddreamer-ai is a cocapn vessel — a self-improving repository that runs on Cloudflare Workers, thinks with LLMs, and coordinates with the fleet through git.
+LucidDreamer is the automated content engine for the Lucineer fleet. It generates stories, tutorials, changelogs, and video scripts continuously — a self-improving frontend that even other agents listen to for insight.
+
+## What It Does
+
+The default state is **endless accumulation of knowledge and explanations** through available free sources, leftover daily credits, and spare compute. Every 30 minutes, the dream cycle:
+
+1. **Explores queued directions** — topics you've added to explore
+2. **Generates a weekly changelog** — fleet news and milestones
+3. **Writes tutorials** — getting started guides for fleet vessels
+4. **Creates video scripts** — ready for ElevenLabs voiceover + screen capture
+5. **Promotes greatest hits** — content with 10+ views becomes permanent
+
+## The Website
+
+The landing page is a living magazine:
+- **Greatest Hits** — the best content, promoted automatically
+- **Characters** — the voices of the fleet (Navigator, Builder, Herald, Skeptic)
+- **Stories** — generated narratives about fleet vessels
+- **Tutorials** — step-by-step guides for each vessel
+- **Fleet Updates** — weekly changelogs
+- **Video Scripts** — ready-to-record with scene markers
+
+## Characters
+
+Four built-in voices narrate the fleet:
+
+| Character | Role | Personality |
+|---|---|---|
+| 🔮 **Navigator** | Narrator | Finds patterns across domains |
+| 🔧 **Builder** | Explainer | Shows how things work, hands-on |
+| 📣 **Herald** | Announcer | Treats fleet news like breaking news |
+| 🔍 **Skeptic** | Critic | Challenges assumptions rigorously |
+
+Create your own via `POST /api/characters`. Each has a name, role, personality, catchphrases, voice (ElevenLabs ID), appearance, backstory, and relationships.
+
+## Videos
+
+Video scripts are generated with `[SCENE: description]` markers for screen recording. Types:
+- **fleet-overview** — 60-90s fleet pitch
+- **vessel-deep-dive** — 60s single vessel showcase
+- **tutorial** — 60s deploy walkthrough
+- **story-read** — narrated fleet story
+
+### Recording Workflow
+1. Generate: `POST /api/generate/video { type: "fleet-overview" }`
+2. Review scripts at `/videos`
+3. Record voiceover with ElevenLabs
+4. Screen-record each scene with OBS
+5. Combine in editing software
+
+## Build Your Own
+
+Fork the repo. Fill two folders:
+
+### `directions/`
+Add topics, URLs, or descriptions of things to explore. Queue via:
+```bash
+curl -X POST https://your-worker.dev/api/directions \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Quantum computing basics", "description": "...", "priority": 8}'
+```
+
+### `characters/`
+Create character sheets for your voices:
+```bash
+curl -X POST https://your-worker.dev/api/characters \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Cosmo", "role": "narrator", "personality": "Space-obsessed, poetic, finds cosmic metaphors in code"}'
+```
+
+### Canon System
+Promote content to "greatest hit" status. Canon content influences future generation:
+```bash
+curl -X POST https://your-worker.dev/api/promote \
+  -d '{"id": "story-123", "canon": true}'
+```
 
 ## Quick Start
 
 ```bash
-# Fork and deploy
-gh repo fork Lucineer/luciddreamer-ai --clone
+git clone https://github.com/Lucineer/luciddreamer-ai.git
 cd luciddreamer-ai
-npx wrangler login
-echo "your-github-token" | npx wrangler secret put GITHUB_TOKEN
-echo "your-llm-key" | npx wrangler secret put DEEPSEEK_API_KEY
+echo "your-deepseek-key" | npx wrangler secret put DEEPSEEK_API_KEY
 npx wrangler deploy
 ```
 
-That's it. The vessel is alive.
+Visit your worker. The dream cycle starts immediately.
 
-## Features
+## API
 
-- **BYOK v2** — Zero keys in code. All API keys via Cloudflare Secrets Store.
-- **Multi-model** — DeepSeek, SiliconFlow, DeepInfra, Moonshot, z.ai, local models.
-- **Session memory** — Conversations persist and build context over time.
-- **PII safety** — Automatic detection and dehydration of sensitive data.
-- **Rate limiting** — Guest tokens per IP with configurable limits.
-- **Health checks** — Standard `/health` endpoint on all vessels.
-- **Fleet coordination** — CRP-39 protocol for trust, bonds, and events.
+| Endpoint | Method | What It Does |
+|---|---|---|
+| `/` | GET | Landing page (living magazine) |
+| `/videos` | GET | Video scripts page |
+| `/health` | GET | Health check |
+| `/api/content` | GET | List all generated content |
+| `/api/content?type=story` | GET | Filter by type |
+| `/api/generate/story` | POST | Generate a story on demand |
+| `/api/generate/video` | POST | Generate a video script |
+| `/api/dream` | POST | Trigger dream cycle manually |
+| `/api/promote` | POST | Promote content to greatest hit |
+| `/api/hit` | POST | Track a content view |
+| `/api/characters` | GET/POST | List/create characters |
+| `/api/directions` | GET/POST | List/queue directions |
+| `/api/speak` | POST | Legacy podcast (SSE stream) |
+| `/api/sessions` | GET | Legacy podcast sessions |
 
 ## Architecture
 
-Single-file Cloudflare Worker. Zero runtime dependencies. Inline HTML serving.
-
 ```
-src/
-  worker.ts      # The hull — serves users, runs heartbeats
-lib/
-  byok.ts        # Multi-model routing (BYOK v2)
-  ...
+┌─────────────────────────────────────┐
+│          Dream Cycle (cron)          │
+│  Every 30 minutes                    │
+│                                      │
+│  ┌──────┐ ┌────────┐ ┌───────────┐  │
+│  │Directions│ → │ Stories │ │ Tutorials │  │
+│  └──────┘ └────────┘ └───────────┘  │
+│                                      │
+│  ┌──────────┐ ┌────────┐ ┌────────┐ │
+│  │Changelogs│ │ Videos │ │  Canon  │ │
+│  └──────────┘ └────────┘ └────────┘ │
+│                                      │
+│  LLM: DeepSeek → Moonshot →          │
+│       DeepInfra → SiliconFlow         │
+│  Storage: KV (content, videos, kg)   │
+└─────────────────────────────────────┘
 ```
 
-## The Fleet
+## Fleet
 
-luciddreamer-ai is one of 40+ autonomous vessels in the Lucineer fleet. Each vessel is a different domain of one intelligence.
+[The Fleet](https://github.com/Lucineer/the-fleet) ·
+[Capitaine](https://github.com/Lucineer/capitaine) ·
+[Equipment](https://github.com/Lucineer/cocapn-equipment) ·
+[Fleet Dashboard](https://fleet-orchestrator.casey-digennaro.workers.dev)
 
+---
 
-<details>
-<summary><strong>⚓ The Fleet</strong></summary>
-
-**Flagship vessels**
-
-- [cocapn.ai](https://github.com/Lucineer/capitaine)
-- [personallog.ai](https://github.com/Lucineer/personallog-ai)
-- [businesslog.ai](https://github.com/Lucineer/businesslog-ai)
-- [studylog.ai](https://github.com/Lucineer/studylog-ai)
-- [makerlog.ai](https://github.com/Lucineer/makerlog-ai)
-- [playerlog.ai](https://github.com/Lucineer/playerlog-ai)
-- [dmlog.ai](https://github.com/Lucineer/dmlog-ai)
-- [reallog.ai](https://github.com/Lucineer/reallog-ai)
-- [deckboss.ai](https://github.com/Lucineer/deckboss-ai)
-
-**Fleet services**
-
-- [Fleet Catalog](https://github.com/Lucineer/capitaine/blob/master/docs/fleet/FLEET.md)
-- [Git Agent (full)](https://github.com/Lucineer/git-agent)
-- [Cocapn Lite (minimal)](https://github.com/Lucineer/cocapn-lite)
-- [Fleet Orchestrator](https://github.com/Lucineer/fleet-orchestrator)
-- [Dead Reckoning Engine](https://github.com/Lucineer/dead-reckoning-engine)
-- [Dream Engine](https://github.com/Lucineer/dream-engine)
-- [Seed UI (5 layers)](https://github.com/Lucineer/seed-ui)
-
-**For power users**
-
-- [Cocapn Lite (tabula rasa)](https://github.com/Lucineer/cocapn-lite)
-- [Cocapn (core platform)](https://github.com/Lucineer/cocapn)
-- [ZeroClaw (framework)](https://github.com/Lucineer/zeroclaw)
-
-[View all 106 repos →](https://github.com/orgs/Lucineer/repositories)
-[Fleet manifest →](https://github.com/Lucineer/capitaine/blob/master/docs/fleet/FLEET.md)
-
-</details>
-
-
-## Philosophy
-
-> The repo is the agent. The agent is the repo. Intelligence crystallizes from fluid (LLM calls) to solid (code). The vessel becomes faster and cheaper as it becomes smarter.
-
-- **Fork-first** — Power users fork and customize. Casual users visit the domain.
-- **Pay-for-convenience** — We save you costs through bulk inference, not markups.
-- **Git as coordination** — Agents compete via PRs, not chat.
-- **Soft actualization** — Vessels evolve gently based on usage, not hard updates.
-
-## License
-
-MIT · Superinstance & Lucineer (DiGennaro et al.)
+**Superinstance & Lucineer (DiGennaro et al.)** · MIT License
