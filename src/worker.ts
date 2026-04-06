@@ -589,6 +589,7 @@ export default {
 
     // ── Health ──
     if (path === '/health') return j({ status: 'ok', vessel: 'luciddreamer-ai', version: 3, timestamp: Date.now() });
+  if (path === '/vessel.json') { try { const vj = await import('./vessel.json', { with: { type: 'json' } }); return new Response(JSON.stringify(vj.default || vj), { headers: { 'Content-Type': 'application/json' } }); } catch { return new Response('{}', { headers: { 'Content-Type': 'application/json' } }); } }
 
     // ── Landing ──
     if (path === '/') {
