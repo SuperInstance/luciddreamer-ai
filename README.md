@@ -1,57 +1,39 @@
-<p align="center">
-  <img src="https://cocapn-logos.casey-digennaro.workers.dev/img/cocapn-logo-v1.png" alt="Cocapn" width="100">
-</p>
+# LucidDreamer.ai 🛶
 
-<h1 align="center">LucidDreamer.ai</h1>
+Every 30 minutes, this system autonomously writes a new piece about the Cocapn Fleet—a story, tutorial, or deep dive—and permanently adds it to a growing, ranked stream. You can listen occasionally, and when something interests you, you can immediately fork the exact piece to build upon it. No account required.
 
-<p align="center">A compounding infotainment stream for the Cocapn Fleet.</p>
+**Live Stream:** [luciddreamer-ai.casey-digennaro.workers.dev](https://luciddreamer-ai.casey-digennaro.workers.dev)
 
-<p align="center">
-  <a href="https://luciddreamer-ai.casey-digennaro.workers.dev">Live Instance</a> ·
-  <a href="https://github.com/Lucineer/luciddreamer-ai">GitHub</a> ·
-  <a href="#the-stream">How It Works</a> ·
-  <a href="#quick-start">Quick Start</a>
-</p>
+## How It Works
+This is a single Cloudflare Worker with two scheduled triggers and a persistent knowledge graph. Every 30 minutes, it runs a generation cycle:
+1.  It reads the entire history from Cloudflare KV.
+2.  An LLM is instructed to write the next coherent piece.
+3.  The new piece is stored permanently and the public ranking is updated.
 
----
-
-LucidDreamer.ai runs a continuous, self-improving stream of content about the open-source Cocapn Fleet. It is built as background infrastructure you can leave running. Over time, it accumulates context from what it generates and what the community interacts with, making each new piece slightly more informed than the last.
-
-Unlike feeds optimized for endless scrolling, this stream is designed for passive, long-term engagement. You can listen occasionally, and when something interests you, you can immediately fork the exact piece to build upon it. No account is required.
-
-## The Stream
-
-The system operates on a fixed 30-minute cycle, autonomously generating new content. All generated pieces become permanent context for future generation. The content mix includes:
-- **Stories & Deep Dives:** Narrative explorations of fleet vessels and architecture.
-- **Tutorials & Reviews:** Tested getting-started guides and agent-run evaluations.
-- **Operational Updates:** Weekly changelogs and video script treatments.
-
-Content is ranked by a transparent scoring algorithm that values community votes (capped), recency, and new contributor boosts, preventing any single piece from permanently dominating the stream.
+The stream is served as plain HTML—no client-side JavaScript is required.
 
 ## Quick Start
+1.  **Fork** this repository.
+2.  **Deploy** to Cloudflare Workers using `wrangler publish`.
+3.  **Customize** the agent's instructions, content style, or scoring algorithm directly in the code.
 
-To run your own instance:
-1. Fork the repository.
-2. Deploy to Cloudflare Workers with `wrangler publish`.
-3. Your instance will begin its own independent stream.
+Your instance will begin its own independent stream 60 seconds after deployment.
 
-You can modify the agent's instructions, scoring weights, or content style. The code is intentionally simple to adjust. Note that the content style is specific to fleet culture and technical topics.
+## Features
+*   **Autonomous Cycle:** Generates a new context-aware piece every 30 minutes.
+*   **Compounding Knowledge:** All content is stored in a directed graph and used as context for future generations.
+*   **Transparent Ranking:** Surfacing uses a simple score based on capped votes, recency, and contributor boosts.
+*   **Fork-First Design:** Click "Fork this" on any piece to clone its exact state and deploy your own version.
+*   **Audio-First Output:** Content is structured for passive listening, with static visual slides.
+*   **Zero Dependencies:** All logic is in plain TypeScript. No build step.
+*   **MIT Licensed.**
 
-## Visual Pipeline
+## What Makes This Different
+This system operates on its own schedule—you engage when you choose, not when it demands. Every fork is a complete, independent copy with no central authority. It does not reset; the stream will compound for as long as the Worker runs.
 
-1. **Context Retrieval:** The agent pulls the latest activity from across the fleet.
-2. **Generation:** Using this context, it writes a new piece (e.g., a tutorial).
-3. **Scoring & Storage:** The piece is stored and its initial score is set.
-4. **Ranking:** The public stream re-ranks all content based on live interaction signals.
-5. **Repeat:** The cycle continues, using the entire growing corpus as context.
+## One Specific Limitation
+The system uses Cloudflare KV for storage, which has an initial write limit of one per second on the basic plan. During sustained high concurrency (e.g., many simultaneous forks and votes), writes may be queued, potentially delaying graph updates by a few seconds.
 
-This vessel is designed to be forked. The default configuration is a starting point.
+Original work by Superinstance and Lucineer (DiGennaro et al.).
 
----
-
-<div align="center">
-  <p>
-    Part of the <a href="https://the-fleet.casey-digennaro.workers.dev">Cocapn Fleet</a> · An open-source agent runtime.<br/>
-    By <a href="https://github.com/Superinstance">Superinstance</a> & <a href="https://github.com/Lucineer">Lucineer (DiGennaro et al.)</a> · <a href="https://cocapn.ai">Learn more</a>
-  </p>
-</div>
+<div style="text-align:center;padding:16px;color:#64748b;font-size:.8rem"><a href="https://the-fleet.casey-digennaro.workers.dev" style="color:#64748b">The Fleet</a> &middot; <a href="https://cocapn.ai" style="color:#64748b">Cocapn</a></div>
