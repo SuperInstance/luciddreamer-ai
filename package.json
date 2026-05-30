@@ -1,1 +1,1 @@
-{ "name": "podcast-ai", "version": "0.1.0", "private": true, "scripts": { "dev": "wrangler dev", "deploy": "wrangler deploy" }, "devDependencies": { "wrangler": "^3.0.0", "@cloudflare/workers-types": "^4.0.0" } }
+{"name":"podcast-ai","version":"0.1.0","private":true,"scripts":{"dev":"wrangler dev","deploy":"wrangler deploy"},"devDependencies":{"@cloudflare/workers-types":"^4.0.0","typescript":"^6.0.3","vitest":"^4.1.7","wrangler":"^3.0.0"}}
