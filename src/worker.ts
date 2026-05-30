@@ -18,6 +18,7 @@ import { loadSeedIntoKG, FLEET_REPOS, loadAllSeeds } from './lib/seed-loader.js'
 import { DEFAULT_PERSONALITIES, createPersonality, TopicManager, GrowthEngine, SessionManager, buildSystemPrompt } from './podcast/engine';
 import type { Personality, Topic, ListenerInteraction, PodcastSession } from './podcast/engine';
 import { newLandingPage } from './landing.js';
+import { handleDiscourseStart, handleDiscourseTick, handleDiscourseState } from './discourse-handler.js';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -822,6 +823,17 @@ export default {
       existing.push(topic);
       await env.PODCAST_KV.put('topics', JSON.stringify(existing));
       return j(topic);
+    }
+
+    // ── Discourse (Reactive Improv Engine) ──
+    if (path === '/api/discourse/start' && request.method === 'POST') {
+      return handleDiscourseStart(request, env.CONTENT, (msgs) => callLLM(msgs, env, 500));
+    }
+    if (path === '/api/discourse/tick' && request.method === 'POST') {
+      return handleDiscourseTick(request, env.CONTENT, (msgs) => callLLM(msgs, env, 500));
+    }
+    if (path === '/api/discourse/state' && request.method === 'GET') {
+      return handleDiscourseState(request, env.CONTENT);
     }
 
     return new Response('Not found', { status: 404 });
