@@ -17,6 +17,7 @@ import { getTracker } from './lib/confidence-tracker.js';
 import { loadSeedIntoKG, FLEET_REPOS, loadAllSeeds } from './lib/seed-loader.js';
 import { DEFAULT_PERSONALITIES, createPersonality, TopicManager, GrowthEngine, SessionManager, buildSystemPrompt } from './podcast/engine';
 import type { Personality, Topic, ListenerInteraction, PodcastSession } from './podcast/engine';
+import { newLandingPage } from './landing.js';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -593,11 +594,9 @@ export default {
 
     // ── Landing ──
     if (path === '/') {
-      const stream = await getStream(env, 0, 12);
-      const trending = await getTrending(env);
-      const customChars = await env.CONTENT.get('characters', 'json') as CharacterSheet[] || [];
-      const chars = customChars.length > 0 ? [...DEFAULT_CHARACTERS, ...customChars] : DEFAULT_CHARACTERS;
-      return new Response(landingPage(stream, trending, chars), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': csp } });
+      // v4: The Kernel That Dreams in Rooms
+      const csp4 = "default-src 'self'; script-src 'self' 'unsafe-inline' https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: https://raw.githubusercontent.com; connect-src 'self' https:; frame-ancestors 'none';";
+      return new Response(newLandingPage(), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': csp4 } });
     }
 
     // ── Stream ──
