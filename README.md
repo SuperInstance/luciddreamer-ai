@@ -49,11 +49,18 @@ npx wrangler dev
 
 LucidDreamer AI is a public-facing web property in the SuperInstance portfolio. It demonstrates the pattern for deploying single-file HTML applications on Cloudflare Workers with custom domains. The Worker is stateless — future versions will integrate D1 for persistent dream storage and Workers AI for automated dream sign extraction. In **γ + η = C**, the serverless deployment minimizes γ (zero infrastructure management). See [Architecture](https://github.com/SuperInstance/SuperInstance/blob/main/ARCHITECTURE.md).
 
+**Dream journal entries**: Sample entries demonstrate the journaling format — structured narratives with metadata tags for location (📍), objects (🏠📚), actions (✈️), and themes (🎭🔄). The tag system enables retrospective pattern analysis: recurring tags reveal dream signs.
+
+**Statistics dashboard**: Three key metrics — lucid dreams this month, total dreams logged, and lucid rate (percentage). The lucid rate is the primary progress indicator, tracking how often reality checks and induction techniques succeed.
+
+**Reality check reminder**: A built-in prompt encourages habit formation. The principle: if you perform reality checks 5–10 times daily while awake, the habit carries into dreams, triggering lucidity.
+
 ## References
 
 - Stumbrys, T. et al. "Induction of Lucid Dreams: A Systematic Review," International Journal of Dream Research (2012).
 - LaBerge, S. & Rheingold, H. *Exploring the World of Lucid Dreaming*, Ballantine (1990).
 - Cloudflare Workers Custom Domains. https://developers.cloudflare.com/workers/custom-domains/
+- Hobson, J. *The Dreaming Brain*, Basic Books (1988). — Neurobiological foundation.
 
 ## License
 
