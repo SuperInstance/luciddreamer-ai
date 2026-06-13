@@ -1,0 +1,39 @@
+{
+  "name": "luciddreamer-ai",
+  "displayName": "LucidDreamer",
+  "version": "1.0.0",
+  "type": "cocapn-vessel",
+  "description": "LucidDreamer",
+  "icon": "\ud83c\udf19",
+  "color": "#8b5cf6",
+  "category": "creative",
+  "capabilities": [
+    "content",
+    "streaming"
+  ],
+  "secrets": {
+    "DEEPSEEK_API_KEY": {
+      "required": false,
+      "hint": "https://platform.deepseek.com/api_keys"
+    },
+    "DEEPINFRA_API_KEY": {
+      "required": false,
+      "hint": "https://deepinfra.com/dashboard/keys"
+    },
+    "SILICONFLOW_API_KEY": {
+      "required": false,
+      "hint": "https://cloud.siliconflow.cn"
+    }
+  },
+  "endpoints": {
+    "health": "/health"
+  },
+  "deployment": {
+    "platform": "cloudflare-workers",
+    "minPlan": "free"
+  },
+  "local": {
+    "supported": true,
+    "port": 8787
+  }
+}
