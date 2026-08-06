@@ -26,6 +26,7 @@ interface Env {
   PODCAST_KV: KVNamespace;
   CONTENT: KVNamespace;
   VIDEOS: KVNamespace;
+  AI: Ai;
   DEEPSEEK_API_KEY?: string;
   MOONSHOT_API_KEY?: string;
   DEEPINFRA_API_KEY?: string;
@@ -199,6 +200,73 @@ const FLEET_VESSELS = [
   'capitaine', 'git-agent', 'cocapn-equipment', 'fleet-orchestrator', 'dead-reckoning-engine',
   'edgenative-ai', 'increments-fleet-trust', 'kungfu-ai', 'the-fleet',
 ];
+
+// ── Vectorized Corpus Search ────────────────────────────────────────────────
+// Loaded lazily from KV. Corpus is 2,786 pieces × 768-dim nomic embeddings.
+
+interface CorpusPiece { p: string; t: string; v: string; d: string; }
+let _corpusMeta: CorpusPiece[] | null = null;
+let _corpusEmbeddings: Float32Array | null = null;
+let _corpusDim = 768;
+let _corpusCount = 0;
+
+async function loadCorpus(env: Env): Promise<{ meta: CorpusPiece[]; embeddings: Float32Array }> {
+  if (_corpusMeta && _corpusEmbeddings) return { meta: _corpusMeta, embeddings: _corpusEmbeddings };
+
+  const [metaRaw, dataB64] = await Promise.all([
+    env.CONTENT.get('embeddings:meta', 'json') as Promise<CorpusPiece[] | null>,
+    env.CONTENT.get('embeddings:data', 'text'),
+  ]);
+
+  if (!metaRaw || !dataB64) throw new Error('Corpus not found in KV. Run compact_embeddings.py first.');
+
+  _corpusMeta = metaRaw;
+  const bytes = Uint8Array.from(atob(dataB64), c => c.charCodeAt(0));
+  _corpusEmbeddings = new Float32Array(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+  _corpusCount = _corpusMeta.length;
+
+  return { meta: _corpusMeta, embeddings: _corpusEmbeddings };
+}
+
+async function searchCorpus(query: string, env: Env, topK = 10) {
+  const { meta, embeddings } = await loadCorpus(env);
+
+  const aiResp: any = await env.AI.run('@cf/baai/bge-base-en-v1.5', { text: query });
+  let embeddingArr: number[];
+  if (Array.isArray(aiResp)) {
+    embeddingArr = aiResp;
+  } else if (aiResp.data && aiResp.data[0] && aiResp.data[0].embedding) {
+    embeddingArr = aiResp.data[0].embedding;
+  } else if (aiResp.data && Array.isArray(aiResp.data[0])) {
+    embeddingArr = aiResp.data[0];
+  } else {
+    // try as flat array
+    embeddingArr = aiResp;
+  }
+  const queryEmb = new Float32Array(embeddingArr);
+
+  const n = _corpusCount;
+  const dim = _corpusDim;
+  const scores: { idx: number; sim: number }[] = [];
+
+  for (let i = 0; i < n; i++) {
+    let dot = 0;
+    const offset = i * dim;
+    for (let j = 0; j < dim; j++) {
+      dot += queryEmb[j] * embeddings[offset + j];
+    }
+    scores.push({ idx: i, sim: dot });
+  }
+
+  scores.sort((a, b) => b.sim - a.sim);
+  return scores.slice(0, topK).map(s => ({
+    similarity: Math.round(s.sim * 10000) / 10000,
+    title: meta[s.idx].t,
+    path: meta[s.idx].p,
+    preview: meta[s.idx].v,
+    directory: meta[s.idx].d,
+  }));
+}
 
 const DEFAULT_CHARACTERS: CharacterSheet[] = [
   { id: 'navigator', name: 'Navigator', role: 'narrator', personality: 'Curious, methodical, finds patterns across domains.', catchphrases: ['Here\'s what connects these...', 'The pattern I see is...'], voice: 'browser-tts', appearance: 'Warm teal, compass rose', backstory: 'Born from the fleet\'s knowledge graph.', relationships: { explorer: 'admires', skeptic: 'respects' } },
@@ -823,6 +891,18 @@ export default {
       existing.push(topic);
       await env.PODCAST_KV.put('topics', JSON.stringify(existing));
       return j(topic);
+    }
+
+    // ── API: Semantic Search (vectorized ai-writings corpus) ──
+    if (path === '/api/search' && request.method === 'GET') {
+      const q = url.searchParams.get('q');
+      if (!q) return j({ error: 'Missing ?q= parameter' }, 400);
+      try {
+        const results = await searchCorpus(q, env);
+        return j({ query: q, count: results.length, results });
+      } catch (e: any) {
+        return j({ error: 'Search failed: ' + e.message, hint: 'Run compact_embeddings.py and upload to KV' }, 500);
+      }
     }
 
     // ── Discourse (Reactive Improv Engine) ──
