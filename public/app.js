@@ -4,8 +4,8 @@
 */
 
 // ===== CONFIG =====
-var IMG_BASE = 'https://raw.githubusercontent.com/SuperInstance/ai-writings/main/site/assets/stories';
-var GITHUB_RAW = 'https://raw.githubusercontent.com/SuperInstance/ai-writings/main';
+var IMG_BASE = 'https://raw.githubusercontent.com/SuperInstance/ai-writings/master/site/assets/stories';
+var GITHUB_RAW = 'https://raw.githubusercontent.com/SuperInstance/ai-writings/master';
 
 var CATEGORY_IMAGES = {
   fiction: IMG_BASE + '/coral-reef.jpg',
