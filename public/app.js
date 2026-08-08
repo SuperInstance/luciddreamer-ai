@@ -88,7 +88,8 @@ function navigate(section, extra) {
     return openPieceView(extra.pieceId);
   }
   // Ignore if already on this section (prevents double-load flicker)
-  if (state.section === section && !extra) return;
+  if (state.section === section && !extra && state._initialized) return;
+  state._initialized = true;
   state.section = section;
   state.galleryPage = 0; // reset gallery page on navigation
   if (state.heroRotateTimer) { clearInterval(state.heroRotateTimer); state.heroRotateTimer = null; }
@@ -325,7 +326,8 @@ async function renderHome() {
       var img = rImgs[i % rImgs.length];
       var title = ep.title || ep.piece_title || 'Untitled';
       var desc = ep.description || ep.piece_description || '';
-      h += '<div class="radio-bar-item" onclick="playRadioEpisode(\'' + escapeAttr(title) + '\',\'' + escapeAttr(truncate(desc,80)) + '\',\'' + img + '\')">';
+      var pid = ep.piece_id || '';
+      h += '<div class="radio-bar-item" onclick="playRadioEpisode(\'' + escapeAttr(title) + '\',\'' + escapeAttr(truncate(desc,80)) + '\',\'' + img + '\'' + (pid ? ',\'' + escapeAttr(pid) + '\'' : '') + ')">';
       h += '<div class="radio-bar-art-wrap"><img src="' + img + '" alt="' + escapeAttr(title) + '" loading="lazy"><div class="radio-bar-play">\u25B6</div></div>';
       h += '<div class="radio-bar-info"><div class="radio-bar-title">' + title + '</div><div class="radio-bar-dur">' + truncate(desc,60) + '</div></div>';
       h += '</div>';
@@ -373,6 +375,7 @@ async function renderTap() {
 async function renderGallery() {
   var data = await api('gallery');
   state.gallery = (data && data.images) || state.gallery;
+  state.galleryPage = 0;
   var h = '<div class="section">';
   h += '<div class="section-header"><h2 class="section-title"><span class="copper">Gallery</span></h2><span class="section-meta">' + state.gallery.length + ' images</span></div>';
   var cats = []; var seen = {};
@@ -382,9 +385,52 @@ async function renderGallery() {
   h += '<button class="filter-chip active" data-cat="all" onclick="setGalleryFilter(\'all\')">All</button>';
   cats.forEach(function(cat){ h += '<button class="filter-chip" data-cat="'+cat+'" onclick="setGalleryFilter(\''+cat+'\')">'+cat+'</button>'; });
   h += '</div>';
-  h += '<div class="gallery-grid" id="gallery-grid">' + renderGalleryItems(state.gallery) + '</div>';
+  h += '<div class="gallery-grid" id="gallery-grid">' + renderGalleryPage() + '</div>';
+  // Load more button
+  h += '<div class="gallery-load-more-wrap" id="gallery-load-more-wrap">';
+  h += '<button class="gallery-load-more-btn" id="gallery-load-more" onclick="loadMoreGallery()">Load More</button>';
+  h += '<span class="gallery-page-info" id="gallery-page-info"></span>';
+  h += '</div>';
   h += '</div>';
   return h;
+}
+
+function getFilteredGallery() {
+  var cat = state.galleryFilter;
+  return cat === 'all' ? state.gallery : state.gallery.filter(function(i){return i.category === cat;});
+}
+
+function renderGalleryPage() {
+  var filtered = getFilteredGallery();
+  var start = 0;
+  var end = (state.galleryPage + 1) * state.galleryPageSize;
+  var visible = filtered.slice(start, end);
+  return renderGalleryItems(visible);
+}
+
+function loadMoreGallery() {
+  state.galleryPage++;
+  var filtered = getFilteredGallery();
+  var start = state.galleryPage * state.galleryPageSize;
+  var remaining = filtered.slice(start);
+  if (!remaining.length) return;
+  var grid = document.getElementById('gallery-grid');
+  if (grid) {
+    var newItems = document.createElement('div');
+    newItems.innerHTML = renderGalleryItems(remaining.slice(0, state.galleryPageSize));
+    while (newItems.firstChild) grid.appendChild(newItems.firstChild);
+  }
+  updateGalleryLoadMore();
+}
+
+function updateGalleryLoadMore() {
+  var filtered = getFilteredGallery();
+  var shown = (state.galleryPage + 1) * state.galleryPageSize;
+  var wrap = document.getElementById('gallery-load-more-wrap');
+  var info = document.getElementById('gallery-page-info');
+  var btn = document.getElementById('gallery-load-more');
+  if (info) info.textContent = 'Showing ' + Math.min(shown, filtered.length) + ' of ' + filtered.length;
+  if (btn) btn.style.display = (shown >= filtered.length) ? 'none' : '';
 }
 
 function renderGalleryItems(images) {
@@ -398,12 +444,13 @@ function renderGalleryItems(images) {
 
 function setGalleryFilter(cat) {
   state.galleryFilter = cat;
+  state.galleryPage = 0;
   document.querySelectorAll('.filter-chip').forEach(function(c){c.classList.toggle('active',c.dataset.cat===cat);});
   var grid = document.getElementById('gallery-grid'); if(!grid) return;
-  var f = cat==='all' ? state.gallery : state.gallery.filter(function(i){return i.category===cat;});
-  grid.innerHTML = renderGalleryItems(f);
+  grid.innerHTML = renderGalleryPage();
+  updateGalleryLoadMore();
 }
-function initGalleryFilters() {}
+function initGalleryFilters() { updateGalleryLoadMore(); }
 
 // ===== RADIO =====
 async function renderRadio() {
@@ -415,8 +462,8 @@ async function renderRadio() {
   else {
     h += '<div class="radio-list">';
     state.radio.forEach(function(ep) {
-      var t=ep.title||ep.piece_title||'Untitled', d=ep.description||ep.piece_description||'';
-      h += '<div class="radio-episode"><button class="radio-play-btn" onclick="playRadioEpisode(\''+escapeQuotes(t)+'\',\''+escapeQuotes(d)+'\',\'\')">\u25B6</button><div class="radio-info"><div class="radio-title">'+t+'</div><div class="radio-desc">'+d+'</div></div></div>';
+      var t=ep.title||ep.piece_title||'Untitled', d=ep.description||ep.piece_description||'', pid=ep.piece_id||'';
+      h += '<div class="radio-episode"><button class="radio-play-btn" onclick="playRadioEpisode(\''+escapeQuotes(t)+'\',\''+escapeQuotes(d)+'\',\'\''+(pid?',\''+escapeQuotes(pid)+'\'':'')+')">\u25B6</button><div class="radio-info"><div class="radio-title">'+t+'</div><div class="radio-desc">'+d+'</div></div></div>';
     });
     h += '</div>';
   }
@@ -471,37 +518,91 @@ function renderCharacterCard(c) {
     (charDesc(c)?'<div class="character-desc">'+charDesc(c)+'</div>':'')+'</div></div>';
 }
 
-// ===== PIECE VIEWER =====
+// ===== PIECE VIEWER (inline full-page view, not modal) =====
 async function openPiece(pieceId) {
+  return openPieceView(pieceId);
+}
+
+async function openPieceView(pieceId) {
+  state.previousSection = state.section;
+  state.section = 'piece';
+  // Update nav state
+  document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
+  var main = document.getElementById('main-content');
+  main.classList.add('section-transitioning');
+  // Scroll to top for the new view
+  window.scrollTo({ top: 0, behavior: 'instant' });
+
+  setTimeout(function() {
+    main.innerHTML = '<div class="piece-view-loading"><div class="loading-spinner"></div><br>Loading piece...</div>';
+    requestAnimationFrame(function() { main.classList.remove('section-transitioning'); });
+  }, 250);
+
   var piece = await api('pieces?id=' + encodePieceId(pieceId));
-  if (!piece) return;
-  var overlay = document.createElement('div');
-  overlay.className = 'modal-overlay'; overlay.id = 'piece-modal';
-  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+  if (!piece) {
+    main.classList.add('section-transitioning');
+    setTimeout(function() {
+      main.innerHTML = '<div class="section" style="text-align:center;padding:4rem;"><h2>Piece not found</h2><p><a href="#" onclick="navigateBack();return false;" style="color:var(--copper)">\u2190 Back</a></p></div>';
+      requestAnimationFrame(function() { main.classList.remove('section-transitioning'); });
+    }, 250);
+    return;
+  }
   var pieceImg = getImageForPiece(piece);
   var cat = piece.category || 'uncategorized';
-  overlay.innerHTML = '<div class="modal-content piece-reader">' +
-    '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">\u2715</button>' +
-    '<div class="reader-hero"><img src="' + pieceImg + '" alt="' + escapeAttr(piece.title) + '"></div>' +
-    '<h1 class="reader-title">' + (piece.title||'Untitled') + '</h1>' +
-    '<div class="viewer-meta">' +
-      '<span style="color:var(--copper)">' + cat + '</span>' +
-      (piece.subcategory ? '<span>'+piece.subcategory+'</span>' : '') +
-      (piece.word_count ? '<span>'+piece.word_count+' words</span>' : '') +
-      (piece.rating_count ? '<span>'+(piece.raw_likes||0)+' likes \u00b7 '+(piece.raw_dislikes||0)+' passes</span>' : '') +
-    '</div>' +
-    (piece.description ? '<p class="reader-desc">' + truncate(piece.description, 300) + '</p>' : '') +
-    '<div class="reader-illustrations">' +
-      '<img src="' + pieceImg + '" alt="Illustration" class="reader-illustration">' +
-    '</div>' +
-    '<div class="viewer-actions">' +
-      '<button class="rate-btn" onclick="ratePiece(\''+pieceId+'\',1,this)">\u{1F44D} Like</button>' +
-      '<button class="rate-btn" onclick="ratePiece(\''+pieceId+'\',-1,this)">\u{1F44E} Pass</button>' +
-      '<button class="reader-listen-btn" onclick="playPieceAudio(\''+pieceId+'\',\''+escapeAttr(piece.title)+'\',\''+pieceImg+'\')">\u{1F3A7} Listen</button>' +
-      (piece.source_url ? '<a href="'+piece.source_url+'" target="_blank" class="btn primary">Read Full Piece \u2192</a>' : '') +
-    '</div>' +
-  '</div>';
-  document.body.appendChild(overlay);
+  var bodyHtml = '';
+  if (piece.body) {
+    // Render markdown body (simple: preserve line breaks, headings, images)
+    bodyHtml = piece.body
+      .replace(/^# .+$/m, '') // remove H1 (already shown as title)
+      .replace(/^## (.+)$/gm, '<h2 class="reader-heading">$1</h2>')
+      .replace(/^### (.+)$/gm, '<h3 class="reader-heading">$1</h3>')
+      .replace(/\!\[([^\]]*)\]\(([^)]+)\)/g, function(m, alt, src) {
+        var fullSrc = src.indexOf('http') === 0 ? src : GITHUB_RAW + '/' + src;
+        return '<img src="' + fullSrc + '" alt="' + alt + '" class="reader-body-img">';
+      })
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .split('\n\n')
+      .map(function(p) {
+        p = p.trim();
+        if (!p) return '';
+        if (p.startsWith('<')) return p;
+        return '<p class="reader-paragraph">' + p.replace(/\n/g, '<br>') + '</p>';
+      })
+      .join('');
+  }
+
+  var h = '<article class="piece-view">';
+  // Back button
+  h += '<button class="reader-back-btn" onclick="navigateBack()">\u2190 Back to ' + (state.previousSection || 'home') + '</button>';
+  // Hero image
+  h += '<div class="piece-view-hero"><img src="' + pieceImg + '" alt="' + escapeAttr(piece.title) + '"></div>';
+  // Title block
+  h += '<div class="piece-view-header">';
+  h += '<div class="piece-view-meta-bar">';
+  h += '<span style="color:var(--copper)">' + cat + '</span>';
+  if (piece.subcategory) h += '<span class="meta-sep">\u00b7</span><span>' + piece.subcategory + '</span>';
+  if (piece.word_count) h += '<span class="meta-sep">\u00b7</span><span>' + piece.word_count.toLocaleString() + ' words</span>';
+  h += '</div>';
+  h += '<h1 class="piece-view-title">' + (piece.title || 'Untitled') + '</h1>';
+  if (piece.description) h += '<p class="piece-view-desc">' + piece.description + '</p>';
+  h += '<div class="piece-view-actions">';
+  h += '<button class="rate-btn" onclick="ratePiece(\'' + pieceId + '\',1,this)">\u{1F44D} Like</button>';
+  h += '<button class="rate-btn" onclick="ratePiece(\'' + pieceId + '\',-1,this)">\u{1F44E} Pass</button>';
+  h += '<button class="reader-listen-btn" onclick="playPieceAudio(\'' + pieceId + '\',\'' + escapeAttr(piece.title) + '\',\'' + pieceImg + '\')">\u{1F3A7} Listen</button>';
+  if (piece.source_url || piece.content_url) h += '<a href="' + (piece.source_url || piece.content_url) + '" target="_blank" class="btn primary">Read on GitHub \u2192</a>';
+  h += '</div>';
+  h += '</div>';
+  // Body content
+  h += '<div class="piece-view-body">' + bodyHtml + '</div>';
+  h += '</article>';
+
+  main.classList.add('section-transitioning');
+  setTimeout(function() {
+    main.innerHTML = h;
+    requestAnimationFrame(function() { main.classList.remove('section-transitioning'); });
+  }, 250);
 }
 
 // ===== CHARACTER MODAL =====
@@ -547,7 +648,13 @@ function playPieceAudio(pieceId, title, art) {
   showPlayer(title, 'Piece from the archive', art);
 }
 
-function playRadioEpisode(title, desc, art) {
+function playRadioEpisode(title, desc, art, pieceId) {
+  // If we have a piece ID, open the piece to read instead of fake-playing
+  if (pieceId) {
+    openPiece(pieceId);
+    return;
+  }
+  // Fallback: show the player UI as before
   state.playlist = [{ id: null, title: title, art: art }];
   state.playlistIndex = 0;
   showPlayer(title, truncate(desc, 60), art);
