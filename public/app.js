@@ -48,7 +48,8 @@ var state = {
   section: 'home',
   pieces: [], daily: [], characters: [], gallery: [], radio: [],
   totalPieces: 0,
-  galleryFilter: 'all', readSort: 'popular', readCategory: 'all', readSearch: '',
+  galleryFilter: 'all', galleryPage: 0, galleryPageSize: 20,
+  readSort: 'popular', readCategory: 'all', readSearch: '',
   currentPiece: null,
   audioElement: null, audioPlaying: false, audioProgress: 0, audioDuration: 0,
   audioCurrentTitle: '', audioCurrentMeta: '', audioCurrentArt: '',
@@ -57,6 +58,7 @@ var state = {
   heroIdx: 0, taglineIdx: 0, tapLive: false,
   galleryImageMap: {},
   heroRotateTimer: null, taglineRotateTimer: null,
+  navigating: false,
 };
 
 // ===== INIT =====
@@ -80,22 +82,38 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ===== NAVIGATION =====
-function navigate(section) {
+function navigate(section, extra) {
+  // If navigating to a piece view, pass extra data
+  if (extra && extra.pieceId) {
+    return openPieceView(extra.pieceId);
+  }
+  // Ignore if already on this section (prevents double-load flicker)
+  if (state.section === section && !extra) return;
   state.section = section;
+  state.galleryPage = 0; // reset gallery page on navigation
   if (state.heroRotateTimer) { clearInterval(state.heroRotateTimer); state.heroRotateTimer = null; }
   if (state.taglineRotateTimer) { clearInterval(state.taglineRotateTimer); state.taglineRotateTimer = null; }
   document.querySelectorAll('.nav-link').forEach(function(l) {
     l.classList.toggle('active', l.dataset.section === section);
   });
   var main = document.getElementById('main-content');
-  main.innerHTML = '<div class="loading"><div class="loading-spinner"></div><br>Loading...</div>';
+  // Fade out
+  main.classList.add('section-transitioning');
   var renderer = ({home: renderHome, tap: renderTap, gallery: renderGallery, radio: renderRadio, read: renderRead})[section] || renderHome;
-  renderer().then(function(html) {
-    main.innerHTML = html;
-    if (section === 'gallery') initGalleryFilters();
-    if (section === 'read') initReadControls();
-    if (section === 'home') { startHeroRotation(); startTaglineRotation(); }
-  });
+  // Wait for fade-out, then swap content and fade in
+  setTimeout(function() {
+    renderer().then(function(html) {
+      main.innerHTML = html;
+      main.scrollTop = 0;
+      // Fade in
+      requestAnimationFrame(function() {
+        main.classList.remove('section-transitioning');
+      });
+      if (section === 'gallery') initGalleryFilters();
+      if (section === 'read') initReadControls();
+      if (section === 'home') { startHeroRotation(); startTaglineRotation(); }
+    });
+  }, 250);
 }
 
 // ===== API =====
@@ -108,6 +126,12 @@ async function apiPost(path, body) {
   catch(e) { console.error('API error (' + path + '):', e); return null; }
 }
 function encodePieceId(id) { return encodeURIComponent(id); }
+
+function navigateBack() {
+  var fromPiece = state.previousSection || 'home';
+  state.section = '_none'; // force re-render
+  navigate(fromPiece);
+}
 
 // ===== IMAGE HELPERS =====
 function getImageForPiece(piece) {
@@ -123,18 +147,29 @@ function getImageForPiece(piece) {
   return CATEGORY_IMAGES[cat] || CATEGORY_IMAGES['concept'];
 }
 
+// Helper: get character display name from any possible field shape
+function charName(c) { return c.display_name || c.name || 'Unknown'; }
+// Helper: get character role/class from any possible field shape
+function charRole(c) { return c.character_class || c.role || ''; }
+// Helper: get character description from any possible field shape
+function charDesc(c) { return c.description || c.backstory || ''; }
+// Helper: get character level
+function charLevel(c) { return c.level || ''; }
+// Helper: get character portrait URL
+function charPortrait(c) { return c.portrait_url || c.avatar_url || ''; }
+
 function getPortraitUrl(c) {
-  if (c.portrait_url) {
-    var u = c.portrait_url;
-    if (u.indexOf('http') === 0) return u;
-    return GITHUB_RAW + '/site' + u;
+  var url = charPortrait(c);
+  if (url) {
+    if (url.indexOf('http') === 0) return url;
+    return GITHUB_RAW + '/site' + url;
   }
-  var id = c.character_id || (c.name||'').toLowerCase() || '';
+  var id = c.character_id || (charName(c)||'').toLowerCase() || '';
   for (var i=0;i<state.gallery.length;i++) {
     var g = state.gallery[i];
-    if (g.image_id && (g.image_id.indexOf(id) !== -1 || g.image_id.indexOf((c.name||'').toLowerCase()) !== -1)) return g.source_url;
+    if (g.image_id && (g.image_id.indexOf(id) !== -1 || g.image_id.indexOf((charName(c)||'').toLowerCase()) !== -1)) return g.source_url;
   }
-  var ch = (c.name||'?')[0] || '?';
+  var ch = (charName(c)||'?')[0] || '?';
   return "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%230f1d22'/><text x='50%25' y='50%25' text-anchor='middle' fill='%23c4774a' font-size='60' font-family='serif'>" + ch + "</text></svg>";
 }
 
@@ -276,7 +311,7 @@ async function renderHome() {
   h += '</div>';
   h += '<div class="tap-panel-right"><div class="tap-panel-roster">';
   state.characters.slice(0,6).forEach(function(c) {
-    h += '<div class="tap-panel-avatar" title="' + escapeAttr(c.name) + '"><img src="' + getPortraitUrl(c) + '" alt="' + escapeAttr(c.name) + '" loading="lazy"><span class="tap-avatar-name">' + c.name + '</span></div>';
+    h += '<div class="tap-panel-avatar" title="' + escapeAttr(charName(c)) + '"><img src="' + getPortraitUrl(c) + '" alt="' + escapeAttr(charName(c)) + '" loading="lazy"><span class="tap-avatar-name">' + charName(c) + '</span></div>';
   });
   h += '</div></div></div></section>';
 
@@ -304,10 +339,10 @@ async function renderHome() {
     h += '<div class="section-header"><h2 class="section-title">The <span class="copper">Cast</span></h2><span class="section-meta">' + state.characters.length + ' characters</span></div>';
     h += '<div class="character-strip">';
     state.characters.forEach(function(c) {
-      h += '<div class="character-strip-item" onclick="openCharacter(\'' + escapeAttr(c.character_id||c.name) + '\')">';
-      h += '<div class="character-strip-portrait"><img src="' + getPortraitUrl(c) + '" alt="' + escapeAttr(c.name) + '" loading="lazy"></div>';
-      h += '<div class="character-strip-name">' + c.name + '</div>';
-      h += '<div class="character-strip-role">' + (c.role||'') + '</div>';
+      h += '<div class="character-strip-item" onclick="openCharacter(\'' + escapeAttr(c.character_id||charName(c)) + '\')">';
+      h += '<div class="character-strip-portrait"><img src="' + getPortraitUrl(c) + '" alt="' + escapeAttr(charName(c)) + '" loading="lazy"></div>';
+      h += '<div class="character-strip-name">' + charName(c) + '</div>';
+      h += '<div class="character-strip-role">' + charRole(c) + '</div>';
       h += '</div>';
     });
     h += '</div></section>';
@@ -431,9 +466,9 @@ function renderPieceCard(p) {
 }
 
 function renderCharacterCard(c) {
-  return '<div class="character-card"><img class="character-portrait" src="'+getPortraitUrl(c)+'" alt="'+c.name+'" loading="lazy">'+
-    '<div class="character-info"><div class="character-name">'+c.name+'</div><div class="character-role">'+(c.role||'')+'</div>'+
-    (c.description?'<div class="character-desc">'+c.description+'</div>':'')+'</div></div>';
+  return '<div class="character-card"><img class="character-portrait" src="'+getPortraitUrl(c)+'" alt="'+charName(c)+'" loading="lazy">'+
+    '<div class="character-info"><div class="character-name">'+charName(c)+'</div><div class="character-role">'+charRole(c)+'</div>'+
+    (charDesc(c)?'<div class="character-desc">'+charDesc(c)+'</div>':'')+'</div></div>';
 }
 
 // ===== PIECE VIEWER =====
@@ -471,18 +506,19 @@ async function openPiece(pieceId) {
 
 // ===== CHARACTER MODAL =====
 function openCharacter(charId) {
-  var c = state.characters.find(function(x) { return (x.character_id || x.name) === charId; });
+  var c = state.characters.find(function(x) { return (x.character_id || charName(x)) === charId; });
   if (!c) return;
   var overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
   overlay.innerHTML = '<div class="modal-content character-modal">' +
     '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">\u2715</button>' +
-    '<div class="char-modal-portrait"><img src="' + getPortraitUrl(c) + '" alt="' + escapeAttr(c.name) + '"></div>' +
-    '<h2 class="char-modal-name">' + c.name + '</h2>' +
-    '<div class="char-modal-role">' + (c.role||'') + '</div>' +
-    '<p class="char-modal-desc">' + (c.description||'') + '</p>' +
-    '<p class="char-modal-personality">' + (c.personality||'') + '</p>' +
+    '<div class="char-modal-portrait"><img src="' + getPortraitUrl(c) + '" alt="' + escapeAttr(charName(c)) + '"></div>' +
+    '<h2 class="char-modal-name">' + charName(c) + '</h2>' +
+    '<div class="char-modal-role">' + charRole(c) + '</div>' +
+    '<p class="char-modal-desc">' + charDesc(c) + '</p>' +
+    (c.personality ? '<p class="char-modal-personality">' + c.personality + '</p>' : '') +
+    (c.catchphrase ? '<p class="char-modal-catchphrase">\u201c' + c.catchphrase + '\u201d</p>' : '') +
   '</div>';
   document.body.appendChild(overlay);
 }
