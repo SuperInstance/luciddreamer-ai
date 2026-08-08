@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Tap — Bar Rail</title>
+<style>
+  /* ═══════════════════════════════════════════════════════
+     THE TAP — SCENE RENDERER
+     A dual-rendering prototype: live MUD state → visual scene
+     ═══════════════════════════════════════════════════════ */
+
+  :root {
+    --amber-glow: rgba(255, 165, 50, 0.15);
+    --amber-strong: rgba(255, 140, 30, 0.35);
+    --amber-text: #ffb347;
+    --warm-white: #fff5e6;
+    --deep-shadow: rgba(20, 10, 0, 0.7);
+    --portal-blue: rgba(100, 180, 255, 0.6);
+    --portal-glow: rgba(100, 180, 255, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #0a0500;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: var(--warm-white);
+    user-select: none;
+  }
+
+  /* ── SCENE CONTAINER ── */
+  #scene {
+    position: relative;
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── BACKGROUND ── */
+  #bg {
+    position: absolute;
+    inset: 0;
+    background-image: url('https://raw.githubusercontent.com/SuperInstance/ai-writings/master/site/assets/stories/the-tap-bar-rail.jpg');
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.85) contrast(1.1) saturate(0.9);
+    transition: filter 2s ease;
+    transform: scale(1.02); /* slight zoom for immersion */
+  }
+
+  /* ── MOOD OVERLAY (warm amber tint) ── */
+  #mood-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse at 50% 60%,
+      rgba(255, 140, 30, 0.08) 0%,
+      rgba(255, 100, 20, 0.12) 40%,
+      rgba(40, 15, 0, 0.35) 100%
+    );
+    mix-blend-mode: multiply;
+    transition: opacity 2s ease, background 2s ease;
+    z-index: 2;
+  }
+
+  /* Mood-based variations */
+  #mood-overlay.quiet { background: radial-gradient(ellipse at 50% 60%, rgba(120, 80, 30, 0.06) 0%, rgba(20, 10, 0, 0.4) 100%); }
+  #mood-overlay.lively { background: radial-gradient(ellipse at 50% 60%, rgba(255, 180, 60, 0.12) 0%, rgba(80, 30, 0, 0.3) 100%); }
+  #mood-overlay.tense { background: radial-gradient(ellipse at 50% 60%, rgba(200, 60, 20, 0.1) 0%, rgba(10, 0, 0, 0.5) 100%); }
+  #mood-overlay.warm { background: radial-gradient(ellipse at 50% 60%, rgba(255, 140, 30, 0.1) 0%, rgba(40, 15, 0, 0.35) 100%); }
+
+  /* ── VIGNETTE ── */
+  #vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.5) 90%, rgba(0,0,0,0.8) 100%);
+    z-index: 3;
+  }
+
+  /* ── TITLE CARD ── */
+  #title-card {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 10;
+    padding: 16px 0;
+    text-align: center;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+    pointer-events: none;
+    transition: opacity 1s;
+  }
+  #title-card h1 {
+    font-size: 1.4rem;
+    font-weight: normal;
+    letter-spacing: 0.3em;
+    color: var(--amber-text);
+    text-shadow: 0 0 20px rgba(255, 140, 30, 0.4), 0 2px 4px rgba(0,0,0,0.8);
+    font-style: italic;
+  }
+  #title-card .subtitle {
+    font-size: 0.7rem;
+    color: rgba(255, 180, 100, 0.5);
+    letter-spacing: 0.5em;
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  /* ── EXIT HOTSPOTS ── */
+  .exit-hotspot {
+    position: absolute;
+    width: 90px; height: 130px;
+    z-index: 5;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    transition: all 0.4s ease;
+  }
+  .exit-hotspot::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50% 50% 8px 8px;
+    background: radial-gradient(ellipse at 50% 70%, var(--portal-glow) 0%, transparent 70%);
+    border: 1px solid transparent;
+    transition: all 0.4s ease;
+  }
+  .exit-hotspot:hover::before {
+    background: radial-gradient(ellipse at 50% 70%, rgba(100, 180, 255, 0.3) 0%, transparent 70%);
+    border-color: var(--portal-blue);
+    box-shadow: 0 0 30px rgba(100, 180, 255, 0.3), inset 0 0 20px rgba(100, 180, 255, 0.1);
+  }
+  .exit-hotspot .exit-label {
+    font-size: 0.65rem;
+    color: rgba(150, 200, 255, 0.4);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    transition: color 0.4s, text-shadow 0.4s;
+    text-align: center;
+    white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  }
+  .exit-hotspot:hover .exit-label {
+    color: rgba(180, 220, 255, 0.95);
+    text-shadow: 0 0 10px rgba(100, 180, 255, 0.5);
+  }
+
+  /* ── CHARACTERS ── */
+  .character {
+    position: absolute;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .character .avatar-ring {
+    position: relative;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(255, 180, 80, 0.3);
+    box-shadow: 0 0 15px rgba(255, 140, 30, 0.2), 0 4px 10px rgba(0,0,0,0.5);
+    transition: all 0.4s;
+    background: #1a0f00;
+  }
+  .character .avatar-ring img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: brightness(0.9) sepia(0.2);
+  }
+  .character .avatar-ring img.error {
+    display: none;
+  }
+  .character .avatar-ring .avatar-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--amber-text);
+    background: linear-gradient(135deg, #2a1505, #1a0a00);
+    text-shadow: 0 0 8px rgba(255, 140, 30, 0.4);
+  }
+  .character.speaking .avatar-ring {
+    border-color: var(--amber-text);
+    box-shadow: 0 0 25px rgba(255, 180, 60, 0.5), 0 0 50px rgba(255, 140, 30, 0.2), 0 4px 10px rgba(0,0,0,0.5);
+    transform: scale(1.1);
+  }
+  .character .name-label {
+    font-size: 0.7rem;
+    color: rgba(255, 200, 130, 0.8);
+    margin-top: 5px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.6);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    font-style: italic;
+  }
+  .character.speaking .name-label {
+    color: var(--amber-text);
+    text-shadow: 0 0 10px rgba(255, 140, 30, 0.4), 0 1px 4px rgba(0,0,0,0.9);
+  }
+
+  /* ── DIALOGUE BUBBLES ── */
+  .dialogue {
+    position: absolute;
+    z-index: 7;
+    max-width: 280px;
+    min-width: 160px;
+    padding: 10px 14px;
+    background: rgba(15, 8, 0, 0.92);
+    border: 1px solid rgba(255, 180, 80, 0.2);
+    border-radius: 8px;
+    color: var(--warm-white);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 15px rgba(255, 140, 30, 0.08);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    pointer-events: none;
+  }
+  .dialogue.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .dialogue.fading {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  .dialogue .speaker {
+    font-size: 0.65rem;
+    color: var(--amber-text);
+    font-style: italic;
+    margin-bottom: 4px;
+    letter-spacing: 0.05em;
+  }
+  .dialogue .text {
+    color: rgba(255, 240, 220, 0.92);
+  }
+  .dialogue.narration {
+    border-color: rgba(150, 130, 100, 0.15);
+    border-style: dashed;
+  }
+  .dialogue.narration .speaker {
+    color: rgba(180, 160, 130, 0.6);
+  }
+  /* Speech tail */
+  .dialogue::after {
+    content: '';
+    position: absolute;
+    bottom: -7px;
+    left: 20px;
+    width: 12px; height: 12px;
+    background: rgba(15, 8, 0, 0.92);
+    border-right: 1px solid rgba(255, 180, 80, 0.2);
+    border-bottom: 1px solid rgba(255, 180, 80, 0.2);
+    transform: rotate(45deg);
+  }
+  .dialogue.narration::after { display: none; }
+
+  /* ── ENERGY METER ── */
+  #energy-meter {
+    position: absolute;
+    bottom: 16px; left: 16px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 14px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 180, 80, 0.1);
+  }
+  #energy-meter .label {
+    font-size: 0.6rem;
+    color: rgba(255, 180, 100, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+  }
+  #energy-meter .bar {
+    width: 80px; height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  #energy-meter .fill {
+    height: 100%;
+    background: linear-gradient(to right, rgba(255,100,20,0.6), rgba(255,180,60,0.8));
+    border-radius: 2px;
+    transition: width 1s ease;
+    box-shadow: 0 0 8px rgba(255, 140, 30, 0.4);
+  }
+  #energy-meter .mood-tag {
+    font-size: 0.65rem;
+    color: var(--amber-text);
+    font-style: italic;
+    margin-left: 4px;
+  }
+
+  /* ── POLLING INDICATOR ── */
+  #poll-indicator {
+    position: absolute;
+    bottom: 16px; right: 16px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,0,0,0.4);
+    padding: 6px 12px;
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+  }
+  #poll-indicator .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(100, 255, 100, 0.8);
+    animation: pulse-dot 2s ease infinite;
+  }
+  #poll-indicator.polling .dot {
+    background: rgba(255, 200, 50, 1);
+    animation: pulse-dot 0.5s ease infinite;
+  }
+  #poll-indicator .text {
+    font-size: 0.55rem;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* ── CONNECTION STATUS ── */
+  #status-toast {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    background: rgba(10, 5, 0, 0.95);
+    border: 1px solid rgba(255, 100, 50, 0.3);
+    padding: 20px 40px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(255, 100, 20, 0.2);
+    transition: opacity 0.6s;
+  }
+  #status-toast h2 {
+    font-size: 1rem;
+    color: var(--amber-text);
+    font-style: italic;
+    margin-bottom: 6px;
+  }
+  #status-toast p {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.4);
+  }
+  #status-toast.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ── AMBIENT PARTICLES (dust motes) ── */
+  #particles {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .dust-mote {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: rgba(255, 200, 100, 0.4);
+    border-radius: 50%;
+    animation: drift linear infinite;
+  }
+  @keyframes drift {
+    0% { transform: translate(0, 100vh) scale(0); opacity: 0; }
+    10% { opacity: 0.6; transform: scale(1); }
+    90% { opacity: 0.4; }
+    100% { transform: translate(var(--drift-x, 50px), -10vh) scale(0.5); opacity: 0; }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    #title-card h1 { font-size: 1rem; }
+    .character .avatar-ring { width: 44px; height: 44px; }
+    .dialogue { max-width: 200px; font-size: 0.7rem; }
+    .exit-hotspot { width: 60px; height: 90px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="scene">
+  <div id="bg"></div>
+  <div id="mood-overlay" class="warm"></div>
+  <div id="particles"></div>
+  <div id="vignette"></div>
+
+  <div id="title-card">
+    <h1>The Tap</h1>
+    <div class="subtitle">Bar Rail</div>
+  </div>
+
+  <!-- Characters and dialogues get injected here -->
+  <div id="character-layer"></div>
+
+  <!-- Exit hotspots -->
+  <div id="exits"></div>
+
+  <!-- Energy / mood meter -->
+  <div id="energy-meter">
+    <span class="label">Energy</span>
+    <div class="bar"><div class="fill" id="energy-fill" style="width: 30%"></div></div>
+    <span class="mood-tag" id="mood-label">quiet</span>
+  </div>
+
+  <!-- Polling indicator -->
+  <div id="poll-indicator">
+    <div class="dot"></div>
+    <span class="text">Live</span>
+  </div>
+
+  <!-- Connection toast -->
+  <div id="status-toast">
+    <h2>Entering The Tap…</h2>
+    <p>Connecting to live room state</p>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  THE TAP — SCENE RENDERER
+//  Live MUD state → Myst-style visual scene
+// ═══════════════════════════════════════════════════════════
+
+const API_BASE = 'https://the-tap.casey-digennaro.workers.dev/api/room/bar-rail';
+const PORTRAIT_BASE = 'https://raw.githubusercontent.com/SuperInstance/ai-writings/master/site/assets/stories';
+const POLL_INTERVAL = 5000;
+const DIALOGUE_FADE_MS = 10000;
+
+// Character position mapping — where agents "sit" at the bar
+// Positioned across the scene like seats at a bar rail
+const SEAT_POSITIONS = [
+  { x: 18, y: 55 },   // seat 1 — far left
+  { x: 32, y: 62 },   // seat 2
+  { x: 46, y: 66 },   // seat 3 — center
+  { x: 60, y: 62 },   // seat 4
+  { x: 74, y: 55 },   // seat 5 — far right
+  { x: 88, y: 50 },   // seat 6 — corner
+];
+
+// Exit positions — doorways in the scene
+const EXIT_DEFS = [
+  { id: 'main-hall', label: 'Main Hall', x: 5, y: 35, w: 80, h: 120 },
+  { id: 'back-room', label: 'Back Room', x: 90, y: 40, w: 70, h: 100 },
+  { id: 'patio', label: 'Patio', x: 45, y: 8, w: 100, h: 60 },
+];
+
+// ═══ STATE ═══
+let knownAgents = new Map();    // agent_id → { display_name, seatIndex }
+let activeDialogues = new Map(); // agent_id → dialogue element
+let lastLineId = 0;
+let firstLoad = true;
+
+// ═══ INIT ═══
+async function init() {
+  spawnDustMotes();
+  renderExits();
+  await poll();
+  setInterval(poll, POLL_INTERVAL);
+}
+
+// ═══ POLLING ═══
+async function poll() {
+  const indicator = document.getElementById('poll-indicator');
+  indicator.classList.add('polling');
+
+  try {
+    const [stateRes, convRes] = await Promise.all([
+      fetch(`${API_BASE}/state`).then(r => r.json()),
+      fetch(`${API_BASE}/conversation`).then(r => r.json())
+    ]);
+
+    renderState(stateRes);
+    renderConversation(convRes);
+
+    if (firstLoad) {
+      firstLoad = false;
+      setTimeout(() => {
+        document.getElementById('status-toast').classList.add('hidden');
+      }, 800);
+    }
+  } catch (err) {
+    console.warn('Poll failed:', err);
+    showToast('Connection lost', 'Retrying…');
+  } finally {
+    setTimeout(() => indicator.classList.remove('polling'), 300);
+  }
+}
+
+// ═══ RENDER STATE ═══
+function renderState(state) {
+  // Mood overlay
+  const moodLabel = state.mood?.label || 'quiet';
+  const energy = state.energy ?? 0.3;
+  const overlay = document.getElementById('mood-overlay');
+  overlay.className = `mood-overlay ${moodLabel}`;
+
+  // Energy meter
+  document.getElementById('energy-fill').style.width = `${Math.round(energy * 100)}%`;
+  document.getElementById('mood-label').textContent = moodLabel;
+
+  // Render characters from agents list
+  const layer = document.getElementById('character-layer');
+  const activeIds = new Set();
+
+  (state.agents || []).forEach((agent, i) => {
+    const id = agent.agent_id || agent.id || agent.name;
+    const name = agent.display_name || agent.name || id;
+    if (!id) return;
+    activeIds.add(id);
+
+    if (!knownAgents.has(id)) {
+      const seatIndex = knownAgents.size % SEAT_POSITIONS.length;
+      knownAgents.set(id, { display_name: name, seatIndex });
+    }
+
+    const info = knownAgents.get(id);
+    const pos = SEAT_POSITIONS[info.seatIndex];
+
+    let charEl = document.getElementById(`char-${id}`);
+    if (!charEl) {
+      charEl = document.createElement('div');
+      charEl.id = `char-${id}`;
+      charEl.className = 'character';
+      charEl.innerHTML = `
+        <div class="avatar-ring">
+          <img src="${PORTRAIT_BASE}/portrait-${name.toLowerCase()}.jpg" 
+               onerror="this.classList.add('error'); this.nextElementSibling.style.display='flex';" 
+               alt="${name}">
+          <div class="avatar-fallback" style="display:none;">${name.charAt(0).toUpperCase()}</div>
+        </div>
+        <div class="name-label">${name}</div>
+      `;
+      charEl.style.left = `${pos.x}%`;
+      charEl.style.top = `${pos.y}%`;
+      charEl.style.transform = 'translate(-50%, -50%)';
+      layer.appendChild(charEl);
+
+      // Animate entrance
+      charEl.style.opacity = '0';
+      charEl.style.transform = 'translate(-50%, -50%) scale(0.5)';
+      requestAnimationFrame(() => {
+        charEl.style.transition = 'opacity 0.8s ease, transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        charEl.style.opacity = '1';
+        charEl.style.transform = 'translate(-50%, -50%) scale(1)';
+      });
+    }
+  });
+
+  // Remove characters that left
+  knownAgents.forEach((info, id) => {
+    if (!activeIds.has(id)) {
+      const el = document.getElementById(`char-${id}`);
+      if (el) {
+        el.style.opacity = '0';
+        el.style.transform = 'translate(-50%, -50%) scale(0.5)';
+        setTimeout(() => el.remove(), 800);
+      }
+      knownAgents.delete(id);
+    }
+  });
+}
+
+// ═══ RENDER CONVERSATION ═══
+function renderConversation(conv) {
+  const lines = conv?.lines || [];
+  if (!lines.length) return;
+
+  // Find new lines since last poll
+  const newLines = lines.filter(l => l.log_id > lastLineId);
+  if (newLines.length === 0 && !firstLoad) return;
+
+  // If first load, show the last 2-3 lines
+  const toShow = firstLoad ? lines.slice(-3) : newLines;
+  lastLineId = Math.max(...lines.map(l => l.log_id), lastLineId);
+
+  toShow.forEach((line, idx) => {
+    setTimeout(() => showDialogue(line), idx * 600);
+  });
+}
+
+// ═══ SHOW DIALOGUE ═══
+function showDialogue(line) {
+  const agentId = line.agent_id;
+  const name = line.display_name || agentId;
+  const isNarration = line.speech_act === 'narrate' || line.tag === 'agent-enter';
+  const content = line.content || '';
+
+  // Truncate very long messages
+  const displayText = content.length > 280 ? content.slice(0, 277) + '…' : content;
+
+  // Highlight the speaking character
+  document.querySelectorAll('.character.speaking').forEach(el => el.classList.remove('speaking'));
+  const charEl = document.getElementById(`char-${agentId}`);
+  if (charEl) charEl.classList.add('speaking');
+
+  // Position dialogue near character
+  const info = knownAgents.get(agentId);
+  const pos = info ? SEAT_POSITIONS[info.seatIndex] : { x: 50, y: 50 };
+
+  // Remove existing dialogue for this agent
+  const existing = activeDialogues.get(agentId);
+  if (existing) {
+    existing.remove();
+    activeDialogues.delete(agentId);
+  }
+
+  // Create dialogue element
+  const dialogue = document.createElement('div');
+  dialogue.className = `dialogue ${isNarration ? 'narration' : ''}`;
+  dialogue.innerHTML = `
+    <div class="speaker">${name}</div>
+    <div class="text">${escapeHtml(displayText)}</div>
+  `;
+
+  // Position above the character
+  const dialogueX = Math.max(5, Math.min(65, pos.x - 8));
+  const dialogueY = Math.max(8, pos.y - 18);
+  dialogue.style.left = `${dialogueX}%`;
+  dialogue.style.top = `${dialogueY}%`;
+
+  document.getElementById('character-layer').appendChild(dialogue);
+  activeDialogues.set(agentId, dialogue);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    dialogue.classList.add('visible');
+  });
+
+  // Remove speaking highlight after a moment
+  setTimeout(() => {
+    if (charEl) charEl.classList.remove('speaking');
+  }, 3000);
+
+  // Fade out after DIALOGUE_FADE_MS
+  setTimeout(() => {
+    dialogue.classList.add('fading');
+    setTimeout(() => {
+      dialogue.remove();
+      if (activeDialogues.get(agentId) === dialogue) {
+        activeDialogues.delete(agentId);
+      }
+    }, 600);
+  }, DIALOGUE_FADE_MS);
+}
+
+// ═══ RENDER EXITS ═══
+function renderExits() {
+  const exitsContainer = document.getElementById('exits');
+  EXIT_DEFS.forEach(exit => {
+    const el = document.createElement('div');
+    el.className = 'exit-hotspot';
+    el.style.left = `${exit.x}%`;
+    el.style.top = `${exit.y}%`;
+    el.style.width = `${exit.w}px`;
+    el.style.height = `${exit.h}px`;
+    el.innerHTML = `<div class="exit-label">${exit.label}</div>`;
+    el.addEventListener('click', () => {
+      showToast(exit.label, 'You see a passage…');
+    });
+    exitsContainer.appendChild(el);
+  });
+}
+
+// ═══ DUST MOTES ═══
+function spawnDustMotes() {
+  const container = document.getElementById('particles');
+  const count = 25;
+  for (let i = 0; i < count; i++) {
+    const mote = document.createElement('div');
+    mote.className = 'dust-mote';
+    mote.style.left = `${Math.random() * 100}%`;
+    mote.style.animationDuration = `${15 + Math.random() * 20}s`;
+    mote.style.animationDelay = `${Math.random() * 20}s`;
+    mote.style.setProperty('--drift-x', `${(Math.random() - 0.5) * 200}px`);
+    mote.style.opacity = Math.random() * 0.4 + 0.2;
+    container.appendChild(mote);
+  }
+}
+
+// ═══ UTILS ═══
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showToast(title, subtitle) {
+  const toast = document.getElementById('status-toast');
+  toast.querySelector('h2').textContent = title;
+  toast.querySelector('p').textContent = subtitle;
+  toast.classList.remove('hidden');
+  setTimeout(() => toast.classList.add('hidden'), 2500);
+}
+
+// ═══ GO ═══
+init();
+</script>
+
+</body>
+</html>
