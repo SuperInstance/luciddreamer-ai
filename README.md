@@ -70,3 +70,9 @@ luciddreamer.ai is a Cloudflare Pages project (`luciddreamer`) serving:
 - `/compass-head/` — the mirrored Compass Head Radio Hour site (generated from the ai-writings repo)
 
 Run `./deploy.sh` to regenerate the mirror from ai-writings and deploy. The mirror is a build artifact and is gitignored; the source of truth is `radio-theater/compass-head-radio-hour` in the ai-writings repo.
+
+---
+
+## State — 2026-08-14
+
+The domain is live and the face is on: `luciddreamer.ai` serves the welcome page ("LucidDreamer — The Face of the Fleet"), featuring The Compass Head Radio Hour as the latest production, with the full mirrored show at `/compass-head/`. The stale Worker route that was intercepting the custom domain has been removed — the domain now resolves directly to the Pages project. `./deploy.sh` regenerates the mirror and redeploys; the mirror stays gitignored as a build artifact (source of truth: ai-writings `radio-theater/compass-head-radio-hour`).
