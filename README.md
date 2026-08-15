@@ -62,3 +62,11 @@ Room signals → plato-nervous (L0-L3) → luciddreamer-ai (L4 cloud)
 | [hermit-crab](https://github.com/SuperInstance/hermit-crab) | Agent migration — applicable to podcast persona transitions |
 
 See [DEPENDENCIES.md](./DEPENDENCIES.md) for detailed dependency and data flow information.
+
+## Deploying luciddreamer.ai
+
+luciddreamer.ai is a Cloudflare Pages project (`luciddreamer`) serving:
+- `/` — the welcome page (face of the domain, features the latest production)
+- `/compass-head/` — the mirrored Compass Head Radio Hour site (generated from the ai-writings repo)
+
+Run `./deploy.sh` to regenerate the mirror from ai-writings and deploy. The mirror is a build artifact and is gitignored; the source of truth is `radio-theater/compass-head-radio-hour` in the ai-writings repo.
