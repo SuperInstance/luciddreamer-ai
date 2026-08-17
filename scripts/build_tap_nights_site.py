@@ -238,6 +238,12 @@ for slug, num, title, roomlabel, desc, image, key in NIGHTS:
             log_text = re.sub(r"\n{3,}", "\n\n", log_text)[:5000]
         except Exception:
             log_text = None
+    elif key == "singles":
+        try:
+            log_text = open("/home/eileen/projects/ai-writings/community-life/tap-night-singles.md").read()
+            log_text = re.sub(r"\n{3,}", "\n\n", log_text)[:5000]
+        except Exception:
+            log_text = None
     html = night_body(slug, num, title, roomlabel, desc, image, qs, vq, lq, log_text)
     open(f"{BASE}/{slug}.html", "w").write(html)
     print(f"{slug}.html written ({len(qs)} cloud, {1 if vq else 0} vision, {len(lq)} local)", flush=True)
