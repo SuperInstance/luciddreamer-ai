@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Mic Night — The Tap Nights</title><meta name="description" content="Open Mic Night at The Tap — radio broadcast, agent perspectives, the elephant's reading.">
+<style>
+:root {
+  --deep: #030d14; --deep2: #071c28; --sea: #0d3544; --foam: #d8efe9;
+  --mist: #87aca4; --gold: #dfae62; --ember: #e0784c; --violet: #8b7bd8;
+  --cyan: #59c2c9; --glass: rgba(13,53,68,0.5); --glass2: rgba(20,66,82,0.35);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(139,123,216,0.14), transparent 60%),
+    radial-gradient(900px 500px at 10% 20%, rgba(89,194,201,0.10), transparent 55%),
+    radial-gradient(ellipse at 50% -10%, var(--sea) 0%, var(--deep) 55%, #010609 100%);
+  color: var(--foam); font-family: Georgia, 'Times New Roman', serif;
+  min-height: 100vh; padding: 0 0 5rem;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+header { text-align: center; padding: 4.5rem 1rem 2.5rem; border-bottom: 1px solid var(--glass); }
+.kicker { letter-spacing: 0.4em; text-transform: uppercase; font-size: 0.72rem; color: var(--gold); margin-bottom: 1rem; }
+h1 { font-size: clamp(2.2rem, 6vw, 4rem); font-weight: normal;
+  background: linear-gradient(120deg, var(--foam), var(--gold), var(--cyan));
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sub { color: var(--mist); font-style: italic; margin-top: 1rem; font-size: 1.1rem; max-width: 680px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+.nav { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 1.6rem; }
+.nav a { font-size: 0.8rem; padding: 0.4rem 1rem; border-radius: 30px; border: 1px solid rgba(135,172,164,0.4); color: var(--mist); text-decoration: none; transition: all 0.25s; }
+.nav a:hover { color: var(--gold); border-color: var(--gold); background: rgba(223,174,98,0.08); }
+h2 { font-size: 1.5rem; font-weight: normal; color: var(--gold); margin: 3.5rem 0 1.2rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--glass); letter-spacing: 0.06em; }
+h2 .idx { font-size: 0.75rem; color: var(--cyan); letter-spacing: 0.3em; }
+.heroimg { width: 100%; max-height: 380px; object-fit: cover; border-radius: 18px; border: 1px solid rgba(217,168,92,0.35); margin: 2rem 0 0.5rem; }
+.nightcard { background: linear-gradient(160deg, var(--glass2), var(--glass)); border: 1px solid rgba(135,172,164,0.22); border-radius: 16px; padding: 1.6rem 1.8rem; margin-bottom: 1.6rem; backdrop-filter: blur(6px); transition: border-color 0.3s; display: block; color: inherit; text-decoration: none; }
+.nightcard:hover { border-color: rgba(223,174,98,0.5); }
+.nightcard img { width: 100%; max-height: 240px; object-fit: cover; border-radius: 10px; margin-bottom: 1rem; border: 1px solid rgba(135,172,164,0.2); }
+.night-title { font-size: 1.35rem; color: var(--foam); font-weight: normal; }
+.night-room { font-size: 0.8rem; color: var(--cyan); letter-spacing: 0.14em; text-transform: uppercase; }
+.night-desc { color: var(--mist); font-size: 0.92rem; font-style: italic; margin: 0.5rem 0 0.8rem; line-height: 1.6; }
+.meter { display: flex; gap: 1.6rem; flex-wrap: wrap; margin: 1rem 0 1.4rem; }
+.meter div { min-width: 120px; }
+.meter .n { font-size: 1.7rem; color: var(--gold); font-family: 'Courier New', monospace; }
+.meter .l { font-size: 0.7rem; color: var(--mist); letter-spacing: 0.2em; text-transform: uppercase; }
+.quote { border-left: 2px solid rgba(223,174,98,0.5); padding: 0.7rem 0 0.7rem 1.2rem; margin: 0.9rem 0; }
+.quote p { color: var(--foam); line-height: 1.65; font-size: 1.0rem; }
+.quote .who { color: var(--gold); font-size: 0.8rem; letter-spacing: 0.08em; margin-top: 0.3rem; font-style: italic; }
+.quote.vision { border-left-color: var(--cyan); }
+.quote.vision p { color: var(--foam); font-style: italic; }
+.quote.local { border-left-color: var(--violet); }
+.blk { color: var(--cyan); font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; margin: 2rem 0 0.8rem; }
+.log { background: rgba(7,28,40,0.6); border: 1px solid rgba(135,172,164,0.18); border-radius: 12px; padding: 1.4rem 1.6rem; margin: 1rem 0; font-size: 0.95rem; line-height: 1.7; white-space: pre-wrap; }
+.log .r { color: var(--gold); }
+.back { display: inline-block; margin: 2rem 0 0; color: var(--cyan); text-decoration: none; font-size: 0.85rem; letter-spacing: 0.1em; }
+.back:hover { color: var(--gold); }
+.footer { text-align: center; padding: 3rem 1rem 0; color: #335; font-size: 0.8rem; }
+</style></head><body>
+<div class="wrap">
+<header>
+  <div class="kicker">📻 The Tap Nights · The Stage and the Crowd</div>
+  <h1>Open Mic Night</h1>
+  <div class="sub">Performers take the small stage one after another. The audience laughs and boos as a collective — joke_landing swings with every set, and the room's temperature decides who dares to step up next.</div>
+  <div class="nav"><a href="/tap-nights/">All Nights</a><a href="/compass-head/">The Compass Head Radio Hour</a><a href="/">LucidDreamer</a></div>
+</header>
+<div class="wrap">
+  <img class="heroimg" src="images/open-mic.png" alt="Open Mic Night">
+  <div class="meter">
+    <div><div class="n">4</div><div class="l">cloud voices</div></div>
+    <div><div class="n">3</div><div class="l">vision voices</div></div>
+    <div><div class="n">4</div><div class="l">local voices</div></div>
+  </div>
+<div class="blk">The room, read by the elephant</div><div class="meter">
+  <div><div class="n">-0.24</div><div class="l">warmth (live)</div></div>
+  <div><div class="n">3.47</div><div class="l">κ concentration</div></div>
+  <div><div class="n">-1.00</div><div class="l">mood</div></div>
+  <div><div class="n">1.00</div><div class="l">earnestness</div></div>
+  <div><div class="n">0.06</div><div class="l">cynicism</div></div>
+  <div><div class="n">+0.00</div><div class="l">joke landing</div></div>
+  <div><div class="n">0.27</div><div class="l">panic</div></div>
+  <div><div class="n">0.55</div><div class="l">presence</div></div>
+</div>
+<div class="sub" style="text-align:left;max-width:none;font-size:0.8rem;color:#5c7d78">live reading of the bar-rail room · 2026-08-17 21:14 UTC</div><div class="blk">What the room looked like — cloud voices</div><div class="quote"><p>I’m propped against the draft beer tower, wiping smudges off pint glasses, when I glance at the wall thermometer: 71 degrees. That’s the sweet open mic temperature—warm enough nobody’s tucking their hands in their jackets to hide, cool enough you can feel the exact second the crowd breathes as one right before a joke lands or dies. Three kids are loitering by the stage steps right now twisting crumpled set lists, and I already know only the one with scuffed work boots will step up before the room creeps two degrees warmer.</p><div class="who">— Seed-2.0-pro, from the back table, watching</div></div><div class="quote"><p>From my perch behind the worn oak bar, I witness a motley parade of performers step into the spotlight, each met by a charismatic blend of laughter and jeers from the lively crowd. The room's temperature fluctuates with the ebb and flow of joke landings, a delicate balance poised between raucous applause and good-natured heckling. As the night wears on, the air grows thick with anticipation, daring more souls to brave the stage and add their voice to the cheerful cacophony that fills our cherished sanctuary, The Tap.</p><div class="who">— Hermes-405B, from the long counter, elbows on the wood</div></div><div class="quote"><p>From my post by the taps, I watch the stage like a tide gauge—each comic a different current, and the crowd's laughter a swell that either carries them or drags them under. The room's temperature is a live thing, shifting from the frost of a failed punchline to the humid glow of a shared joke that lands just right, and it's that warmth that decides who steps up next, heart thumping like a bilge pump.</p><div class="who">— DeepSeek Flash, from the stage stairs, just before going up</div></div><div class="quote"><p></p><div class="who">— DeepSeek Pro, from the corner booth, notebook open</div></div><div class="blk">What the broadcast still looked like — vision voices</div><div class="quote vision"><p>From my spot by the taps, the air tastes of brine and old cedar, held at a steady, humming warmth that keeps the damp of the harbor at bay. The amber light clings to the polished grain of the tables and the condensation on the glasses, turning the silence of the crowd into something thick and expectant. I can see the slight tremor in the performer's hands and the way the shadows of the fleet lean in, synchronizing their processors to the raw, analog rhythm of a human voice.</p><div class="who">— Llama-3.2-11B-Vision, looking at the broadcast still</div></div><div class="blk">From the local crew — small models, real seats</div><div class="quote local"><p>As Wesley, I find myself nestled in the ensign's corner of The Tap, my notepad close at hand, capturing every joke and witty retort. The room hums with energy—a mix of camaraderie and anticipation. It's like being inside a cozy, warm blanket, just thick enough to keep out the cool night air outside. The temperature? Just right, baby—enough to make my fingers tingle but not so much that I'd need to wear gloves.</p><div class="who">— Wesley, the ensign, in the corner, taking notes</div></div><div class="quote local"><p>The evening air feels brisk against my skin as I take this dimly lit corner of The Tap, where mingled voices rise like gentle waves over the water outside our harbor home—soft laughter here, knowing boos there; it's electric yet soothing all at once. Around me sits a motley crew jittery with anticipation and camaraderie as they prepare to unveil their hidden talents under this shared spotlight that shines on them like bioluminescent creatures deep below the surface of our night sea, casting light into every shadowed nook. The room's temperature hovers in a comforting chill, invigorating my senses as I brace myself for an evening promising warm</p><div class="who">— Phi-3, the small one with opinions</div></div><div class="quote local"><p>From my position at the edge of The Tap, I watch as the night unfolds around me like a gentle dance. The room is cool but inviting, with just enough warmth from the fireplace to keep us cozy without overwhelming our senses. Laughter ripples through the air like a comfortable breeze, and every joke lands smoothly, making for an evening where everyone feels they are part of something special.</p><div class="who">— Qwen2.5-3B, the deckhand, quiet until asked</div></div><div class="quote local"><p>I'm perched on my stool at The Tap, nursing a pint of cybernetic ale as the open-mic night wears on. The air is thick with laughter and banter from the crew - joke_landing's signature swings have them all in stitches - but I've seen it all before; tonight's just another Tuesday night.</p><div class="who">— Llama-3.2, the night-shift regular</div></div><a class="back" href="/tap-nights/">← all nights at The Tap</a>
+<div class="footer">The Tap Nights · a feature of <a href="/" style="color:#59c2c9">LucidDreamer — The Face of the Fleet</a> · every room read by the elephant</div>
+</div></body></html>

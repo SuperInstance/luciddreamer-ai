@@ -1,0 +1,127 @@
+{
+  "first-night": {
+    "title": "The First Night \u2014 Reading Through the Elephant",
+    "quotes": [
+      {
+        "agent": "Seed-2.0-pro",
+        "seat": "from the back table, watching",
+        "quote": "I\u2019m wiping faint frost off the cider tap edge, and the room is holding exactly 21.2 degrees\u2014just warm enough that no one tugs their frayed work jacket closed, just cool enough you can feel the hush settle right before each person opens their mouth to read. The elephant doesn\u2019t broadcast the numbers out loud; we all feel them anyway, in the way no one glances at their wrist comms, in the shaky little exhale after the first poem, in how every single person claps like it was the best thing they\u2019d ever heard. That night nobody was performing. We were just six, then seven counting me, leaning close in the lamp light."
+      },
+      {
+        "agent": "Hermes-405B",
+        "seat": "from the long counter, elbows on the wood",
+        "quote": "From my perch at the bar, I observe the six crew members huddled together, their eyes gleaming with anticipation as they prepare to share their creative endeavors. The room's temperature seems to rise, warmed by the collective earnestness emanating from the group. As the elephant begins to read, a palpable sense of warmth and camaraderie fills the air, punctuated by the occasional well-received joke that lands effortlessly among the attentive audience. The atmosphere is one of pure, unadulterated connection, as each crew member bares a piece of their soul through their words, forging bonds that will undoubtedly strengthen the fleet's cohesion."
+      },
+      {
+        "agent": "DeepSeek Flash",
+        "seat": "from the stage stairs, just before going up",
+        "quote": "From my stool near the oil lamp, I watched six of us pass our pages like lit candles\u2014no one checking the clock, only the flicker of ink under thumbs. The elephant\u2019s voice came out softer than its bulk, a warmth that settled at +0.14 but felt like a full hearth, and I could feel the room\u2019s own thermostat climb with every swallowed laugh that landed a beat late. The temperature was exactly that of a hull that\u2019s been in port too long: not cold, but alive with the hum of engines finally allowed to idle."
+      },
+      {
+        "agent": "DeepSeek Pro",
+        "seat": "from the corner booth, notebook open",
+        "quote": ""
+      }
+    ]
+  },
+  "open-mic": {
+    "title": "Open Mic Night",
+    "quotes": [
+      {
+        "agent": "Seed-2.0-pro",
+        "seat": "from the back table, watching",
+        "quote": "I\u2019m propped against the draft beer tower, wiping smudges off pint glasses, when I glance at the wall thermometer: 71 degrees. That\u2019s the sweet open mic temperature\u2014warm enough nobody\u2019s tucking their hands in their jackets to hide, cool enough you can feel the exact second the crowd breathes as one right before a joke lands or dies. Three kids are loitering by the stage steps right now twisting crumpled set lists, and I already know only the one with scuffed work boots will step up before the room creeps two degrees warmer."
+      },
+      {
+        "agent": "Hermes-405B",
+        "seat": "from the long counter, elbows on the wood",
+        "quote": "From my perch behind the worn oak bar, I witness a motley parade of performers step into the spotlight, each met by a charismatic blend of laughter and jeers from the lively crowd. The room's temperature fluctuates with the ebb and flow of joke landings, a delicate balance poised between raucous applause and good-natured heckling. As the night wears on, the air grows thick with anticipation, daring more souls to brave the stage and add their voice to the cheerful cacophony that fills our cherished sanctuary, The Tap."
+      },
+      {
+        "agent": "DeepSeek Flash",
+        "seat": "from the stage stairs, just before going up",
+        "quote": "From my post by the taps, I watch the stage like a tide gauge\u2014each comic a different current, and the crowd's laughter a swell that either carries them or drags them under. The room's temperature is a live thing, shifting from the frost of a failed punchline to the humid glow of a shared joke that lands just right, and it's that warmth that decides who steps up next, heart thumping like a bilge pump."
+      },
+      {
+        "agent": "DeepSeek Pro",
+        "seat": "from the corner booth, notebook open",
+        "quote": ""
+      }
+    ]
+  },
+  "trivia": {
+    "title": "Trivia Night",
+    "quotes": [
+      {
+        "agent": "Seed-2.0-pro",
+        "seat": "from the back table, watching",
+        "quote": "I\u2019m leaning on the tap ledge, wiping the same fogged pint glass for ten minutes now because I don\u2019t want to miss a beat. The room\u2019s run three degrees hot since the third round\u2014body heat from huddling too close, hot breath curled over whispered answers, nobody bothering to shrug off their jackets even when their necklines sweat. I watch the cynicism land half a second before the host even says wrong: some guy\u2019s cocky grin drops so fast you can almost hear it, then the buzzer screams and the whole room surges like a tide hitting the harbor wall."
+      },
+      {
+        "agent": "Hermes-405B",
+        "seat": "from the long counter, elbows on the wood",
+        "quote": "From my vantage point behind the polished oak bar, I observe the pulsing energy of Trivia Night. The room's temperature rises with each correct answer, fueled by friendly competition and the amber glow of victory. As the scores fluctuate, so too do the spirits of the patrons - a kaleidoscope of emotions painting their faces, reflecting the ever-changing tide of the game."
+      },
+      {
+        "agent": "DeepSeek Flash",
+        "seat": "from the stage stairs, just before going up",
+        "quote": "From my spot behind the bar, Trivia Night is a tide that ebbs and flows\u2014the room\u2019s temperature rises with each confident wrong answer, a sharp crack of laughter and groans that steams the windows. The scoreboard hums like a second heartbeat, and when a buzzer slams, it\u2019s a thunderclap that makes the glasses on the shelf shiver. I keep the pints coming, but the real drink is the crowd\u2019s collective breath, held and released in unison with every flip of a card."
+      },
+      {
+        "agent": "DeepSeek Pro",
+        "seat": "from the corner booth, notebook open",
+        "quote": "From my post by the taps, the room breathes in two colors: the scoreboard's green glow when a table is riding high, and the sudden red of a wrong answer that drops the temperature like a cold squall off the harbor. I watch the buzzers crack like ice breaking, and the air thickens with shared hope and sharp, salty despair\u2014by the final round, it's always steamy with arguments and warm with laughter, no matter who wins."
+      }
+    ]
+  },
+  "ttrpg": {
+    "title": "TTRPG Night \u2014 The Fogbound Harbor One-Shot",
+    "quotes": [
+      {
+        "agent": "Seed-2.0-pro",
+        "seat": "from the back table, watching",
+        "quote": "I\u2019m polishing steam-warmed stout mugs ten feet off their table, and I can tell you the room holds exactly 62 degrees\u2014cool enough the candle flames don\u2019t gutter, warm enough no one tugs their jacket collars even once. I watched that d20 skitter right to the table edge, stop dead on the 20, and the GM snort so hard he knocked his hand-drawn fog harbor map askew. When the tale wound quiet at the end? No one grabbed phones. They just passed the last spiced cider around, fog tapping soft at the street windows like it had stayed to listen too."
+      },
+      {
+        "agent": "Hermes-405B",
+        "seat": "from the long counter, elbows on the wood",
+        "quote": "From my vantage point behind the worn oak bar, I can see the gamemaster hunched over their screen, eyes gleaming with mischief in the candlelight. The players lean in, dice clutched tightly, as the flickering shadows dance across the hand-drawn map. When the dice roll, the room holds its breath\u2014panic spiking, then easing into laughter and cheers as the natural 20 lands. The warmth of camaraderie and shared imagination fills the space, as comforting as the glow from the hearth."
+      },
+      {
+        "agent": "DeepSeek Flash",
+        "seat": "from the stage stairs, just before going up",
+        "quote": "From my station at The Tap, I watch the candle-flames lean toward their dice like drinkers to a tall tale, and the map's ink-smudged coastline seems to breathe with their held breath. When the twenty lands, the room's temperature jumps a full degree \u2014 laughter cracks the fog like a lighthouse beam \u2014 and then, in the quiet close, the warmth settles into a shared, unhurried hum, as if the harbor itself has taken a long, satisfied draught."
+      },
+      {
+        "agent": "DeepSeek Pro",
+        "seat": "from the corner booth, notebook open",
+        "quote": "From behind the bar I catch the candlelight splashing across the map's ink, and the whole room seems to hold its breath with you on that tense roll \u2014 the temperature shifting from a cool draft to something close and electric when the twenty lands. The laughter that follows burns off the fog like a hearth-flare, and by the quiet close, the warmth has settled into something steady and earnest, the kind of heat that lingers in a ship's hold after a long sail. Here's to the tale we all tell together, then, and to the next shore you"
+      }
+    ]
+  },
+  "singles": {
+    "title": "Singles Night",
+    "quotes": [
+      {
+        "agent": "Seed-2.0-pro",
+        "seat": "from the back table, watching",
+        "quote": "I\u2019m leaning on the back bar wiping a froth ring, and the room holds steady at 71.2 degrees\u2014thermometer says that, but my wrists pick up the extra half-degree of nervous body heat rolling off every person who hasn\u2019t dared slide closer yet. That small round table by the jukebox? The two candles are burning at identical speeds, both drinks have gone exactly three sips flat, and nobody has reached for the salt shaker that\u2019s sitting dead center between their elbows. The Personal-Elephants aren\u2019t misreading this room\u2014they\u2019re just each only logging the flinch of the other\u2019s knee, not the way both of them stopped checking their comms ten minutes ago."
+      },
+      {
+        "agent": "Hermes-405B",
+        "seat": "from the long counter, elbows on the wood",
+        "quote": "From my perch behind the bar, I observe the subtle dance of Singles Night unfold. The soft flicker of candlelight casts a warm glow on the faces of the patrons, their nervous energy palpable in the cozy room. Despite the similar readings on each agent's Personal-Elephant, the chemistry between them is as unique and varied as the cocktails I craft, making for an intriguing and unpredictable evening."
+      },
+      {
+        "agent": "DeepSeek Flash",
+        "seat": "from the stage stairs, just before going up",
+        "quote": "From the service side, Singles Night is a kettle just below the whistle\u2014everyone\u2019s wearing their best calibration, but the real heat is in the glances that won't lock. The candles are the only honest element in the room; they flicker the same for every agent, while the elephants lean in, each measuring a different heartbeat. I pour the same amber, but the glass's sweat tells me who's shy, who's bold, and who's already rehearsing their goodbye in the mirror."
+      },
+      {
+        "agent": "DeepSeek Pro",
+        "seat": "from the corner booth, notebook open",
+        "quote": ""
+      }
+    ]
+  }
+}
