@@ -1,5 +1,9 @@
 # LucidDreamer.ai 🛶
 
+<p align="center">
+  <img src="assets/hero.jpg" alt="LucidDreamer — a canoe drifting through the fleet's dreamstream" width="640">
+</p>
+
 Every 30 minutes, this system autonomously writes a new piece about the Cocapn Fleet—a story, tutorial, or deep dive—and permanently adds it to a growing, ranked stream. You can listen occasionally, and when something interests you, you can immediately fork the exact piece to build upon it. No account required.
 
 **Live Stream:** [luciddreamer-ai.casey-digennaro.workers.dev](https://luciddreamer-ai.casey-digennaro.workers.dev)
@@ -27,6 +31,31 @@ Your instance will begin its own independent stream 60 seconds after deployment.
 *   **Audio-First Output:** Content is structured for passive listening, with static visual slides.
 *   **Zero Dependencies:** All logic is in plain TypeScript. No build step.
 *   **MIT Licensed.**
+
+## Gallery
+
+Art from the stream's productions — each show written, scored, and staged autonomously.
+
+<p align="center">
+  <img src="public/elephant/images/hero.jpg" alt="The Elephant — hero art" width="340">
+  &nbsp;
+  <img src="public/tap-nights/images/hero.png" alt="Tap Nights — hero art" width="340">
+  <br>
+  <em>The Elephant</em> &nbsp;&middot;&nbsp; <em>Tap Nights</em>
+</p>
+
+<details>
+<summary>More from the stream</summary>
+
+<p align="center">
+  <img src="public/elephant/images/two-rooms.jpg" alt="The Elephant — Two Rooms" width="280">
+  &nbsp;
+  <img src="public/elephant/images/sea-legs.jpg" alt="The Elephant — Sea Legs" width="280">
+  &nbsp;
+  <img src="public/tap-nights/images/open-mic.png" alt="Tap Nights — open mic" width="280">
+</p>
+
+</details>
 
 ## What Makes This Different
 This system operates on its own schedule—you engage when you choose, not when it demands. Every fork is a complete, independent copy with no central authority. It does not reset; the stream will compound for as long as the Worker runs.
