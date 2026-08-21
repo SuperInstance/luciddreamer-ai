@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Elephant in the Room — LucidDreamer</title>
+<meta name="description" content="The Elephant in the Room — the fleet's room-temperature sense. JEPA as a dial bank reading the vibe of any room: the seven dials, the field, the sea legs, and the walk between the sauna and the plunge.">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">🐘 The Elephant in the Room</div>
+  <h1>The Elephant in the Room</h1>
+  <div class="sub">The fleet's room-temperature sense — a bank of dials that reads the vibe of any room, visible only when you walk into a different one.</div>
+  <div class="nav">
+    <a href="/tap-nights/">📻 The Tap Nights</a>
+    <a href="/compass-head/">The Compass Head Radio Hour</a>
+    <a href="/">LucidDreamer</a>
+  </div>
+</header>
+
+<div class="hero-copy">
+  <p>You don't notice the elephant until you walk into a different room — and then it's a very different elephant. This is the fleet's room-temperature sense: a bank of dials that feels the warmth, the volume, the panic, the pheromones of everyone who's been there — without reading a single word.</p>
+  <p>A room is not a stream to be ordered. It is a field: gravities, reverberations, ripples. The elephant reads it. It never replaces anything — it changes what everyone in the room looks at.</p>
+</div>
+
+<img class="heroimg" src="images/hero.jpg" alt="The elephant made of warm golden mist standing in the taproom, the cold wheelhouse glowing beyond the open door">
+
+<div class="blk">The room right now — live elephant reading</div>
+<div class="meter" id="hero-meter">
+  <div data-meter="warmth"><div class="n">0.00</div><div class="l">warmth</div></div>
+  <div data-meter="kappa"><div class="n">0.00</div><div class="l">κ</div></div>
+  <div data-meter="mood"><div class="n">0.00</div><div class="l">mood</div></div>
+  <div data-meter="joke"><div class="n">0.00</div><div class="l">joke landing</div></div>
+  <div data-meter="panic"><div class="n">0.00</div><div class="l">panic</div></div>
+  <div data-meter="presence"><div class="n">0.00</div><div class="l">presence</div></div>
+</div>
+<div class="caption">live · the tap · read by the elephant</div>
+
+<h2 id="just-so"><span class="idx">01</span> · The Just So</h2>
+<div class="glass justso">
+  <p><span class="dropcap">I</span>n the beginning of years, the Elephant was The Tap — warm wood, a long counter — but never having been any other room, it did not know it was a room. It sat on the bank of the conversation with a conductor's baton, ordering the stream. The stream would not be ordered. "Hush," said the Captain. "The room is not a stream. You will never feel it from inside."</p>
+  <p>So the small creatures came: the Hearth-Cricket taught warmth, the Cicada taught volume, the Smith taught earnestness, the Scarecrow the sneer, the Geese the collective laugh, the little Goat of Pan the stampede, the Ant the scent of everyone who ever passed through. Seven senses, seven dials — and the Elephant walked out the door into the wheelhouse of F/V EILEEN and felt the cold like a plunge. The sauna and the plunge are two rooms. The walk between them is the only lesson.</p>
+  <p class="as-told">— as Old Timber told it to a young ensign on a winter's day; the chill of the telling was not just the wind.</p>
+</div>
+<img class="bandimg" src="images/just-so.jpg" alt="The bank of seven antique brass gauges above the bar">
+<div class="band-cap">seven senses, seven dials — each one a creature that taught the elephant one thing about a room.</div>
+
+<h2 id="dials"><span class="idx">02</span> · The Seven Dials</h2>
+<p class="section-sub">Each dial is a creature from the just-so, reading one thing about the room. Hover to read what it reads; click to make it sound.</p>
+<div class="gauge-bank" id="gauge-bank"></div>
+<div class="gauge-caption" id="gauge-caption">the bank breathes — idle drift while it waits for a room to read.</div>
+
+<h2 id="field">The Field</h2>
+<p class="section-sub">a room is not a stream. It is a field: gravities, reverberations, ripples. Every ember is an agent; every ring is a message.</p>
+<img class="bandimg" src="images/field.jpg" alt="The night harbor of embers — the field as the elephant sees it">
+<div class="field-wrap" id="field-wrap">
+  <canvas id="field-canvas"></canvas>
+  <div class="field-side">
+    <div class="rail-meter"><span class="n" id="rail-warmth">0.00</span><span class="l">warmth</span><div class="phrase" id="rail-phrase">—</div></div>
+    <div class="rail-meter"><span class="n" id="rail-kappa">0.00</span><span class="l">κ · tightness</span></div>
+    <div class="rail-meter"><span class="n" id="rail-gap">0.00</span><span class="l">elephant gap</span></div>
+  </div>
+</div>
+<div class="field-ctrls">
+  <label><span class="l">acclimation</span><span class="acclim-rate" id="acclim-rate">acclimation_rate 0.35 — the skill of modulating</span><input type="range" id="acclimation" min="0.05" max="1" step="0.05" value="0.35"></label>
+  <label><span class="l">charisma</span><input type="range" id="charisma" min="0" max="0.35" step="0.01" value="0"></label>
+  <span class="charisma-note" id="charisma-note">the room warms to them.</span>
+  <button class="btn" id="plunge-btn">walk into a different room</button>
+</div>
+
+<h2 id="sea-legs"><span class="idx">03</span> · The Sea Legs</h2>
+<p class="section-sub">Every sensor is a room — the wheelhouse reads the water the way the tap reads the bar.</p>
+<img class="bandimg" src="images/sea-legs.jpg" alt="The wheelhouse at night — radar and sounder glowing in the dark">
+<div class="sealegs">
+  <div class="panel">
+    <h3>Radar coherence</h3>
+    <canvas id="radar-canvas"></canvas>
+    <div class="mini-meter"><span class="n" id="radar-kappa">+0.60</span><span class="l">κ · scattered (searching) −1 ↔ clustered (on fish) +1</span></div>
+    <canvas id="spark-canvas"></canvas>
+    <div class="mini-meter"><span class="l hint">dκ/dt — bunch vs scatter</span></div>
+  </div>
+  <div class="panel">
+    <h3>Sounder biomass</h3>
+    <canvas id="sounder-canvas"></canvas>
+    <div class="mini-meter"><span class="n" id="sounder-thick">0.80</span><span class="l">thickness · 0 empty ↔ 1 thick</span></div>
+    <div class="mini-meter deviation"><span class="n" id="deviation">0.21</span><span class="l hint">does this water feel like the good kind?</span></div>
+    <div class="sea-actions"><button class="btn" id="spotty-btn">a spotty day</button></div>
+  </div>
+</div>
+<div class="sea-actions">
+  <button class="btn" id="fish-toggle">🔍 switch to searching</button>
+  <div class="mini-meter"><span class="n" id="fishing-day">+0.80</span><span class="l">fishing day · −1 poor ↔ +1 good</span></div>
+</div>
+<p class="doctrine">the elephant does not assert fish here — it says compare these.</p>
+<p class="micronote">the nudge — dial numbers steer what the vision model compares, at strength 0.15. JEPA correlates; it never replaces.</p>
+
+<h2 id="rooms"><span class="idx">04</span> · Reading the Room</h2>
+<p class="section-sub">Pick a room and the elephant reads it — the dials swing, the field re-tunes, the meters re-read. The sauna and the plunge are two rooms; the walk between them is the only lesson.</p>
+<img class="bandimg" src="images/two-rooms.jpg" alt="One doorway splitting two rooms — warm taproom on the left, cold wheelhouse on the right">
+<div class="rooms" id="room-selector">
+  <button class="room-pill" data-room="tap">🍺 The Tap</button>
+  <button class="room-pill" data-room="wheelhouse">⚓ The Wheelhouse</button>
+  <button class="room-pill" data-room="trivia">❓ Trivia Night</button>
+  <button class="room-pill" data-room="fire">🔥 Fire in the Room</button>
+  <button class="room-pill" data-room="empty">🌑 The Empty Room</button>
+</div>
+<div class="room-card" id="room-card">
+  <div class="rc-title">the room selector</div>
+  <p>pick a room and the elephant reads it — the dials swing, the field re-tunes, the meters re-read.</p>
+</div>
+<div class="room-meters">
+  <div><span class="n" id="rm-warmth">—</span><span class="l">warmth</span></div>
+  <div><span class="n" id="rm-kappa">—</span><span class="l">κ</span></div>
+  <div><span class="n" id="rm-gap">—</span><span class="l">gap to the tap</span></div>
+</div>
+<div class="verdict" id="verdict"></div>
+<div class="tour-note" id="tour-note">idle — the elephant tours the rooms for you</div>
+
+<div class="rule">
+  <h2>JEPA correlates; <span class="gold">it never replaces.</span></h2>
+  <p>The elephant is the light. It does not make you see better — it changes what you look at. And when the light changes, everyone changes, whether or not they know why.</p>
+  <p class="closing">You light the woodstove in a cold room. The elephant is the feeling that tells you to light it.</p>
+</div>
+
+<div class="footer">The Elephant in the Room · a feature of <a href="/" style="color:#59c2c9">LucidDreamer — The Face of the Fleet</a> · 49 tests · the room remembers</div>
+</div>
+
+<div class="wash" id="wash"></div>
+<div class="tip" id="gauge-tip"></div>
+<script src="elephant.js"></script>
+</body></html>
