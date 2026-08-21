@@ -58,7 +58,7 @@ Room signals → plato-nervous (L0-L3) → luciddreamer-ai (L4 cloud)
 | [plato-audio-jepa](https://github.com/SuperInstance/plato-audio-jepa) | Audio perception layer |
 | [concrete-token-demo](https://github.com/SuperInstance/concrete-token-demo) | CLI demo of the underlying distillation pipeline |
 | [plato-browser](https://github.com/SuperInstance/plato-browser) | Browser-native demo |
-| [openconstruct-kernel](https://github.com/SuperInstance/openconstruct-kernel) | Hardware detection feeding sensor data |
+| [OpenConstruct](https://github.com/SuperInstance/OpenConstruct) | Hardware detection feeding sensor data |
 | [hermit-crab](https://github.com/SuperInstance/hermit-crab) | Agent migration — applicable to podcast persona transitions |
 
 See [DEPENDENCIES.md](./DEPENDENCIES.md) for detailed dependency and data flow information.
