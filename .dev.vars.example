@@ -1,0 +1,19 @@
+# .dev.vars.example — template for local development and forks
+#
+# Copy to `.dev.vars` (gitignored) for `npx wrangler dev`, or set the same
+# names as secrets for deployed workers:
+#
+#     npx wrangler secret put DEEPSEEK_API_KEY
+#
+# The worker's cron calls an LLM to write each piece (BYOK — bring your own
+# key). At least ONE provider key is required or generation fails at runtime.
+# DeepSeek is the default provider in src/worker.ts; the others are optional
+# fallbacks. Ollama (local) needs no key but is not usable from a deployed
+# Worker.
+#
+# NEVER commit real keys. This file is documentation only.
+
+DEEPSEEK_API_KEY = "sk-<your-deepseek-key>"
+MOONSHOT_API_KEY = "sk-<your-moonshot-key>"
+DEEPINFRA_API_KEY = "<your-deepinfra-key>"
+SILICONFLOW_API_KEY = "sk-<your-siliconflow-key>"

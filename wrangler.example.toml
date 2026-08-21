@@ -1,0 +1,50 @@
+# wrangler.example.toml — template for forkers
+#
+# Copy to `wrangler.toml` and fill in YOUR values. The committed wrangler.toml
+# is the author's live config; this file documents every value a fork needs.
+# No real ids or secrets here — replace every `<...>` before deploying.
+#
+# Quick start (5 commands, ~10 minutes):
+#   1. npx wrangler login
+#   2. Create your own KV namespaces (the four below) and paste their ids:
+#        npx wrangler kv namespace create PODCAST_KV
+#        npx wrangler kv namespace create CONTENT
+#        npx wrangler kv namespace create VIDEOS
+#        npx wrangler kv namespace create KG
+#   3. Set your LLM API keys as secrets (see .dev.vars.example):
+#        npx wrangler secret put DEEPSEEK_API_KEY
+#        npx wrangler secret put MOONSHOT_API_KEY   # optional
+#        npx wrangler secret put DEEPINFRA_API_KEY  # optional
+#        npx wrangler secret put SILICONFLOW_API_KEY  # optional
+#   4. Replace <ACCOUNT_ID> below with your Cloudflare account id.
+#   5. npx wrangler deploy
+
+name = "luciddreamer-ai"
+main = "src/worker.ts"
+compatibility_date = "2024-01-01"
+account_id = "<ACCOUNT_ID>"
+
+# KV — one namespace per binding. All four are required.
+#
+# KNOWN CONFIG QUIRK: in the author's live deployment, PODCAST_KV and KG
+# point at the SAME namespace id (intentional aliasing — the two bindings
+# use disjoint key prefixes, so sharing one namespace is safe). If you fork,
+# create separate namespaces per binding; do not copy the author's ids.
+[[kv_namespaces]]
+binding = "PODCAST_KV"
+id = "<PODCAST_KV_NAMESPACE_ID>"
+
+[[kv_namespaces]]
+binding = "CONTENT"
+id = "<CONTENT_NAMESPACE_ID>"
+
+[[kv_namespaces]]
+binding = "VIDEOS"
+id = "<VIDEOS_NAMESPACE_ID>"
+
+[[kv_namespaces]]
+binding = "KG"
+id = "<KG_NAMESPACE_ID>"
+
+[triggers]
+crons = ["*/30 * * * *"]

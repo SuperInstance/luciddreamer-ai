@@ -17,11 +17,42 @@ This is a single Cloudflare Worker with two scheduled triggers and a persistent 
 The stream is served as plain HTML—no client-side JavaScript is required.
 
 ## Quick Start
-1.  **Fork** this repository.
-2.  **Deploy** to Cloudflare Workers using `wrangler publish`.
-3.  **Customize** the agent's instructions, content style, or scoring algorithm directly in the code.
 
-Your instance will begin its own independent stream 60 seconds after deployment.
+> **Honest timeline: ~10 minutes, not 60 seconds.** The Worker needs your own
+> Cloudflare account id, four KV namespaces, and an LLM API key before it can
+> generate anything. Everything below is documented in
+> [`wrangler.example.toml`](./wrangler.example.toml) and
+> [`.dev.vars.example`](./.dev.vars.example) — copy them and fill in your values.
+
+1.  **Fork** this repository.
+2.  **Create your own KV namespaces** (the committed `wrangler.toml` contains
+    the author's account id and namespace ids — they won't work for you):
+    ```bash
+    npx wrangler kv namespace create PODCAST_KV
+    npx wrangler kv namespace create CONTENT
+    npx wrangler kv namespace create VIDEOS
+    npx wrangler kv namespace create KG
+    ```
+    Paste the returned ids into your `wrangler.toml` under each `[[kv_namespaces]]` binding.
+3.  **Set your LLM key** — generation is BYOK (bring your own key). DeepSeek
+    is the default provider; at least one key is required:
+    ```bash
+    npx wrangler secret put DEEPSEEK_API_KEY
+    ```
+    Optional providers: `MOONSHOT_API_KEY`, `DEEPINFRA_API_KEY`, `SILICONFLOW_API_KEY`.
+4.  **Replace `<ACCOUNT_ID>`** in `wrangler.toml` with your Cloudflare account id.
+5.  **Deploy:**
+    ```bash
+    npx wrangler deploy
+    ```
+
+Your instance begins its own independent stream on the next 30-minute cron
+(within 30 minutes of deploy, not 60 seconds).
+
+> **Known config quirk:** in the author's live deployment, `PODCAST_KV` and `KG`
+> bindings point at the *same* KV namespace id (intentional aliasing — they use
+> disjoint key prefixes, so sharing one namespace is safe). When you fork, give
+> each binding its own namespace; don't copy the author's ids.
 
 ## Features
 *   **Autonomous Cycle:** Generates a new context-aware piece every 30 minutes.
@@ -29,7 +60,9 @@ Your instance will begin its own independent stream 60 seconds after deployment.
 *   **Transparent Ranking:** Surfacing uses a simple score based on capped votes, recency, and contributor boosts.
 *   **Fork-First Design:** Click "Fork this" on any piece to clone its exact state and deploy your own version.
 *   **Audio-First Output:** Content is structured for passive listening, with static visual slides.
-*   **Zero Dependencies:** All logic is in plain TypeScript. No build step.
+*   **Zero Runtime Dependencies:** All Worker logic is plain TypeScript — no
+    npm runtime packages. (There *is* a toolchain: `wrangler`/`tsc` dev
+    dependencies and a build step to bundle `src/worker.ts`.)
 *   **MIT Licensed.**
 
 ## Gallery
