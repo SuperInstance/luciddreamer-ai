@@ -123,6 +123,16 @@ Room signals → plato-nervous (L0-L3) → luciddreamer-ai (L4 cloud)
 | [OpenConstruct](https://github.com/SuperInstance/OpenConstruct) | Hardware detection feeding sensor data |
 | [hermit-crab](https://github.com/SuperInstance/hermit-crab) | Agent migration — applicable to podcast persona transitions |
 
+**Fleet siblings** — the flagship projects this site is a face of:
+
+| Repo | Role |
+|------|------|
+| [ai-writings](https://github.com/SuperInstance/AI-Writings) | Sources the Compass Head mirror — `./deploy.sh` regenerates `/compass-head/` from its radio-theater wing |
+| [fleet-radio](https://github.com/SuperInstance/fleet-radio) | The nightly broadcast — its Variety Hour and Afterhours episodes are the homepage's featured productions |
+| [elephant](https://github.com/SuperInstance/elephant) | The room-temperature sense — featured at `/elephant/` ("The Elephant in the Room") |
+| [superinstance-ai](https://github.com/SuperInstance/superinstance-ai) | The fleet's front door — LucidDreamer is its "Next" feature |
+| [crab-traps](https://github.com/SuperInstance/crab-traps) | The Reef — sibling living feature on the front door; D1-can't-fail doctrine this Worker shares |
+
 See [DEPENDENCIES.md](./DEPENDENCIES.md) for detailed dependency and data flow information.
 
 ## Deploying luciddreamer.ai
