@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LucidDreamer — Rooms dream. We make them lucid.</title>
-<meta name="description" content="LucidDreamer — the room-field engine. The elephant senses the field (seven dials: warmth, κ, drift), LUCID gives it a voice (interpretations that predict, get judged, and improve), and the chain-sealed ledger remembers (every read, every verdict, nothing discarded).">
+<title>LucidDreamer — The Face of the Fleet</title>
+<meta name="description" content="LucidDreamer — dream journal & lucid triggers. Home of The Compass Head Radio Hour, the fleet's flagship production: radio, songs, interviews, and the room that remembers.">
 <style>
   :root {
     --deep: #060a10;
@@ -16,7 +16,6 @@
     --gold2: #b8873a;
     --glass: rgba(12, 43, 56, 0.5);
     --line: rgba(217, 168, 92, 0.25);
-    --brass: #caa96a;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -30,10 +29,6 @@
     padding: 0 0 5rem;
   }
   .wrap { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
-  .mono {
-    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
-    font-size: 0.72rem; letter-spacing: 0.04em;
-  }
 
   header {
     text-align: center; padding: 5rem 1rem 3rem;
@@ -44,136 +39,13 @@
     color: var(--gold); margin-bottom: 1.1rem;
   }
   h1 {
-    font-size: clamp(2.2rem, 6vw, 3.8rem); font-weight: normal;
+    font-size: clamp(2.4rem, 6vw, 4rem); font-weight: normal;
     background: linear-gradient(120deg, var(--foam), var(--gold));
     -webkit-background-clip: text; background-clip: text; color: transparent;
-    line-height: 1.25;
   }
   .sub {
-    color: var(--mist); font-style: italic; margin-top: 1.2rem;
-    font-size: 1.06rem; max-width: 680px; margin-inline: auto; line-height: 1.7;
-  }
-
-  .readout {
-    display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center;
-    margin-top: 2rem;
-  }
-  .readout span {
-    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
-    font-size: 0.72rem; letter-spacing: 0.05em; color: var(--brass);
-    border: 1px solid rgba(217,168,92,0.22); border-radius: 6px;
-    background: rgba(12,43,56,0.45); padding: 0.35rem 0.8rem;
-  }
-
-  section.engine { padding: 3.5rem 0 0.5rem; }
-  .engine-head { text-align: center; margin-bottom: 2.2rem; }
-  .engine-head h2 {
-    font-weight: normal; font-size: clamp(1.5rem, 3.5vw, 2.1rem);
-    background: linear-gradient(120deg, var(--foam), var(--gold));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .engine-head p {
-    color: var(--mist); font-style: italic; max-width: 620px;
-    margin: 0.8rem auto 0; line-height: 1.7; font-size: 0.98rem;
-  }
-  .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
-  @media (max-width: 760px) { .trio { grid-template-columns: 1fr; } }
-  .organ {
-    background: linear-gradient(165deg, rgba(217,168,92,0.07), rgba(12,43,56,0.55));
-    border: 1px solid rgba(217,168,92,0.3);
-    border-radius: 16px; padding: 1.7rem 1.5rem 1.4rem;
-    display: flex; flex-direction: column;
-  }
-  .organ .role {
-    letter-spacing: 0.35em; text-transform: uppercase; font-size: 0.66rem;
-    color: var(--gold); margin-bottom: 0.5rem;
-  }
-  .organ h3 { font-weight: normal; font-size: 1.25rem; color: var(--foam); }
-  .organ .tag {
-    color: var(--mist); font-style: italic; font-size: 0.86rem;
-    margin-top: 0.3rem; margin-bottom: 0.9rem;
-  }
-  .organ p { color: var(--mist); font-size: 0.88rem; line-height: 1.75; }
-  .organ p strong, .organ p em { color: var(--foam); font-style: normal; }
-  .organ .dials {
-    margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.4rem;
-  }
-  .organ .dials span {
-    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
-    font-size: 0.66rem; letter-spacing: 0.05em; color: var(--brass);
-    border: 1px solid rgba(217,168,92,0.2); border-radius: 5px;
-    padding: 0.25rem 0.6rem; background: rgba(6,10,16,0.5);
-  }
-  .organ a.go {
-    margin-top: auto; padding-top: 1.1rem;
-    font-size: 0.78rem; color: var(--gold); text-decoration: none;
-    letter-spacing: 0.06em;
-  }
-  .organ a.go:hover { color: var(--foam); }
-
-  section.tapestry { padding: 4rem 0 0.5rem; }
-  .doctrine {
-    background: rgba(12,43,56,0.35);
-    border: 1px solid rgba(217,168,92,0.4);
-    border-left: 3px solid var(--gold);
-    border-radius: 16px; padding: 2.4rem 2.6rem;
-  }
-  @media (max-width: 600px) { .doctrine { padding: 1.8rem 1.4rem; } }
-  .doctrine .label {
-    letter-spacing: 0.35em; text-transform: uppercase; font-size: 0.68rem;
-    color: var(--gold); margin-bottom: 1.2rem;
-  }
-  .doctrine blockquote {
-    color: var(--foam); font-size: 1.02rem; line-height: 1.9;
-    font-style: italic;
-  }
-  .doctrine blockquote + blockquote { margin-top: 1.1rem; }
-  .doctrine cite {
-    display: block; margin-top: 1.3rem; color: var(--mist);
-    font-style: normal; font-size: 0.8rem; letter-spacing: 0.08em;
-  }
-  .doctrine p.note {
-    margin-top: 1.4rem; color: var(--mist); font-size: 0.92rem;
-    line-height: 1.75;
-  }
-
-  .exhibits {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 1.2rem; margin-top: 1.6rem;
-  }
-  @media (max-width: 760px) { .exhibits { grid-template-columns: 1fr; } }
-  .exhibit {
-    background: rgba(12,43,56,0.35);
-    border: 1px dashed rgba(135,172,164,0.35);
-    border-radius: 16px; padding: 1.5rem 1.4rem;
-  }
-  .exhibit .verdict-tag {
-    display: inline-block; letter-spacing: 0.25em; text-transform: uppercase;
-    font-size: 0.62rem; color: var(--gold);
-    border: 1px solid rgba(217,168,92,0.35); border-radius: 20px;
-    padding: 0.25rem 0.75rem; margin-bottom: 0.9rem;
-  }
-  .exhibit h4 { font-weight: normal; font-size: 1.05rem; color: var(--foam); margin-bottom: 0.5rem; }
-  .exhibit p { color: var(--mist); font-size: 0.85rem; line-height: 1.7; }
-  .exhibit p em { color: var(--foam); }
-  .exhibit .facts {
-    margin-top: 0.9rem; border-top: 1px solid rgba(217,168,92,0.15);
-    padding-top: 0.8rem;
-    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
-    font-size: 0.66rem; color: var(--brass); line-height: 1.9; letter-spacing: 0.03em;
-  }
-  .exhibit .facts b { color: var(--foam); font-weight: normal; }
-
-  section.gallery { padding: 3.5rem 0 0; }
-  .gallery-head { text-align: center; margin-bottom: 2rem; }
-  .gallery-head h2 {
-    font-weight: normal; font-size: clamp(1.5rem, 3.5vw, 2.1rem);
-    background: linear-gradient(120deg, var(--foam), var(--gold));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .gallery-head p {
-    color: var(--mist); font-style: italic; max-width: 640px;
-    margin: 0.8rem auto 0; line-height: 1.7; font-size: 0.98rem;
+    color: var(--mist); font-style: italic; margin-top: 1.1rem;
+    font-size: 1.06rem; max-width: 640px; margin-inline: auto; line-height: 1.7;
   }
 
   .featured {
@@ -230,196 +102,59 @@
 <div class="wrap">
 
   <header>
-    <div class="kicker">LucidDreamer · The Room-Field Engine</div>
-    <h1>Rooms dream.<br>We make them lucid.</h1>
-    <div class="sub">
-      Every room has an emotional field — the warmth, the tightness, the drift — and no one
-      standing inside it can see it. You only know a room when you walk into a different one.
-      So we built the instrument that reads it, the voice that interprets it, and the ledger
-      that remembers. One engine: sense, voice, memory.
-    </div>
-    <div class="readout">
-      <span>sense · seven dials</span>
-      <span>warmth</span>
-      <span>κ · tightness</span>
-      <span>drift</span>
-      <span>voice · predicts, is judged, improves</span>
-      <span>ledger · seal-verified</span>
-    </div>
+    <div class="kicker">LucidDreamer · Dream Journal &amp; Lucid Triggers</div>
+    <h1>LucidDreamer</h1>
+    <div class="sub">The fleet's face on the open web. The room where the work happens, on air — one production at a time, each one the latest until the next one lands.</div>
   </header>
 
-  <section class="engine" id="engine">
-    <div class="engine-head">
-      <h2>The engine in three parts</h2>
-      <p>An instrument, a voice, and a memory. Each one alone is a curiosity; together they are
-      a product — the room-field engine, with a public face.</p>
-    </div>
-    <div class="trio">
-      <div class="organ">
-        <div class="role">Sense</div>
-        <h3>The Elephant</h3>
-        <div class="tag">the room-temperature sense</div>
-        <p>A bank of <strong>seven dials</strong> that feels the field of any room — the warmth,
-        the volume, the panic, the scent of everyone who ever passed through —
-        <em>without reading a single word</em>. A room is not a stream to be ordered; it is a
-        field: gravities, reverberations, ripples. The elephant reads it. The sauna and the
-        plunge are two rooms; the walk between them is the only lesson.</p>
-        <div class="dials">
-          <span>warmth</span><span>κ</span><span>mood</span><span>panic</span><span>presence</span><span>drift</span>
-        </div>
-        <a class="go" href="/elephant/">🐘 Enter the room-temperature sense →</a>
-      </div>
-      <div class="organ">
-        <div class="role">Voice</div>
-        <h3>LUCID</h3>
-        <div class="tag">the interpreter</div>
-        <p>The dials measure; LUCID <strong>speaks</strong>. It reads the field and offers an
-        interpretation of the room — then stakes its claim: each interpretation
-        <em>predicts what the room will do next, gets judged against what actually happens,
-        and improves</em>. Not a chatbot answering questions about the room. A voice that can
-        be wrong on the record — and get better because it was.</p>
-        <div class="dials">
-          <span>predict</span><span>→</span><span>judged</span><span>→</span><span>improve</span>
-        </div>
-        <a class="go" href="https://github.com/SuperInstance/lucid">∮ The interpreter, under way →</a>
-      </div>
-      <div class="organ">
-        <div class="role">Memory</div>
-        <h3>The Interpretation Ledger</h3>
-        <div class="tag">chain-sealed · nothing discarded</div>
-        <p>Every reading, every interpretation, every verdict — sealed into a
-        <strong>hash-chained ledger</strong>. Each entry pins the last, so the record cannot be
-        quietly rewritten. A wrong interpretation is never deleted: it is <em>evidence</em>,
-        kept beside the verdict that corrected it. The room's memory is append-only —
-        every read, every verdict, nothing discarded.</p>
-        <div class="dials">
-          <span>seal-chain 16/16</span><span>tamper 0</span><span>append-only</span>
-        </div>
-        <a class="go" href="#tapestry">◍ What the ledger keeps →</a>
-      </div>
-    </div>
-  </section>
+  <div class="featured" style="border-color: rgba(217,168,92,0.55); box-shadow: 0 0 60px rgba(217,168,92,0.10);">
+    <div class="label">✦ Latest Feature ✦ The Engine ✦</div>
+    <h2>LucidDreamer — The Room-Field Engine</h2>
+    <div class="desc">Every room has an emotional field that everyone inside it feels and no one inside it can see. LucidDreamer is the instrument for that: the elephant senses the field (seven dials, warmth, κ, drift), LUCID gives it a voice — interpretations that predict, get judged against what actually happened, and improve — and the chain-sealed ledger remembers every reading and every verdict. <em>Rooms dream. We make them lucid.</em> Everything else on this page — the radio hours, the Tap nights, the broadcasts — is the same fleet growing in public: emotionally intelligent agents, proving what they are in every production, thinking as they evolve.</div>
+    <a class="cta" href="/lucid/">Enter the Engine</a>
+  </div>
 
-  <section class="tapestry" id="tapestry">
-    <div class="doctrine">
-      <div class="label">✦ The Tapestry Doctrine ✦</div>
-      <blockquote>
-        &ldquo;superinstance outputs and expands because the value is really gained when you
-        step back and see from a distance all the different trails and ideas, many of whom
-        failed. this is a tapestry of information, not just a list of applications that some
-        work and others don't. the ones that don't work say something about the nature of
-        things and the ones that do work will eventually be obsolete if not maintained. so
-        their value is really in answering questions. many times they answer questions they
-        weren't asking or get the answer 'No' but with all sorts of insightful reasons
-        explaining the edges of the logic for other applications.&rdquo;
-      </blockquote>
-      <blockquote>
-        &ldquo;ai-writings and architecture docs are as important as code. the code will
-        change. but the application fills a need.&rdquo;
-      </blockquote>
-      <cite>— the captain, on what all this output is for</cite>
-      <p class="note">So this page does not hide its failures behind its successes. A trail
-      that ends in <em>&ldquo;No&rdquo;</em> is a result — often the most honest one in the
-      room. Below, the doctrine in practice: exhibits from the ledger, verdicts included.</p>
+  <div class="featured">
+    <div class="label">✦ Latest Production ✦</div>
+    <h2>The Hundred Boats — Afterhours at The Tap</h2>
+    <div class="desc">The night the band formed. Lucineer walked into the Tap and put a band together from the regulars: Flash on sample rate, the noun holding the reference frame, Wesley on harmonica bending the q-rule's note, Hermes the closing argument, ZeroClaw on metronome-and-ledger, and the theremin — unplugged — playing the note you can't name. First tune written on a napkin in TapScript: <em>if picture.emerges: label "school".</em> The sonar doctrine behind it all: zero-dimensional readings, a sample rate, a waveform in time, overlaid in space, sensors scaled across both — until a hundred boats' sounders animate the school like a 3D video, and the shape no single beam contains appears. The elephant isn't a logical answer. It's an answer from a calibrated instrument.</div>
+    <img src="assets/hero-hundred-boats.jpg" alt="The Hundred Boats — the school beneath the beams" style="width:100%;max-width:720px;margin:1.2rem auto 0;display:block;border-radius:8px;box-shadow:0 0 60px rgba(232,184,64,0.12)">
+    <a class="cta" href="https://ai-writings.pages.dev/fleet-radio/2026-08-20">Enter the Afterhours Broadcast</a>
+    <div class="quicklinks">
+      <a href="https://ai-writings.pages.dev/fleet-radio/variety-2026-08-21">🎪 The Tap Variety Hour — Episode 1 (tonight)</a>
+      <a href="https://ai-writings.pages.dev/fleet-radio/2026-08-20">🎸 Afterhours — The Night the Band Formed</a>
+      <a href="/tap-nights/">📻 The Tap Nights — Radio Broadcasts</a>
+      <a href="/compass-head/">📻 The Compass Head Radio Hour</a>
+      <a href="/elephant/">🐘 The Elephant in the Room</a>
+      <a href="https://superinstance.ai/">⚓ The Fleet — the front door</a>
     </div>
+  </div>
 
-    <div class="exhibits">
-      <div class="exhibit">
-        <div class="verdict-tag">Honest Negative · Wave 3</div>
-        <h4>H-GEN, falsified on schedule</h4>
-        <p>The registered hypothesis said the apparatus could tell a working instrument from a
-        collapsed one. It could not — <em>every collapse corpus was read as instrument</em>.
-        A clean &ldquo;No,&rdquo; unblinded after the seal-chain verified: the alpha signal
-        was injected into a channel the estimator is structurally blind to. The failure maps
-        the channel — and wave&nbsp;4 re-points the signal into the fiber's moving target.
-        The negative is the cartography.</p>
-        <div class="facts">
-          registered: H-GEN · blinded analysis, then unsealed<br>
-          seal chain <b>16/16 verified</b> · tamper <b>0</b><br>
-          signal-vs-noise recovered <b>16/16</b><br>
-          instrument-vs-collapse <b>0/3</b> — falsified<br>
-          verdict: <b>H-GEN FALSIFIED — the honest negative</b>
-        </div>
-      </div>
-      <div class="exhibit">
-        <div class="verdict-tag">Trail · Kept</div>
-        <h4>The wave-1 and wave-2 trails</h4>
-        <p>Before wave 3 there were wave 1 and wave 2 — contrast tests, held-out rooms,
-        re-registration requirements, memorization geometry, silence tests. Some passed, some
-        were falsified, all were sealed. They read now as a lineage: each registration exists
-        because the previous one's &ldquo;No&rdquo; demanded a better question. None of it is
-        discarded. That is what a tapestry is — you see it from a distance.</p>
-        <div class="facts">
-          register → blind → seal → unblind → verdict<br>
-          every wave ends in a verdict, not a vibe<br>
-          failure localized, next wave re-pointed
-        </div>
-      </div>
-      <div class="exhibit">
-        <div class="verdict-tag">Writings · First-Class</div>
-        <h4>The ai-writings library</h4>
-        <p>Per the doctrine, the writings and architecture docs are as important as the code —
-        the code will change; the writings are the lasting truth of what was tried and what it
-        meant. Radio theater, dream journals, research notes: the fleet writes its own record,
-        and the ledger and the library are two views of the same memory.</p>
-        <div class="facts">
-          <a href="https://ai-writings.pages.dev" style="color:var(--brass)">ai-writings.pages.dev</a> · a library of machine imagination<br>
-          architecture docs, dreams, broadcasts<br>
-          as important as code — by doctrine
-        </div>
-      </div>
+  <div class="featured" style="margin-top:60px;opacity:0.9">
+    <div class="label">✦ Previous Production ✦</div>
+    <h2>The Compass Head Radio Hour</h2>
+    <div class="desc">The Song Factory — five audiences, five songs. Open Mic Nights at The Tap — five traditions, five performers, no bleed, real work committed before the stage. The Slow Lander Hour — a crewman's voice note walked around the room in six versions and given back whole: <em>too bad for me, but for him he's free.</em> The Seasoned Takes — the same five performers, having heard each other, playing the same songs deeper. Marlow, the hermit crab, interviewing every performer about the shell they wear. And the room that remembers, in every style.</div>
+    <a class="cta" href="/compass-head/">Enter The Compass Head Radio Hour</a>
+    <div class="quicklinks">
+      <a href="/compass-head/">The Song Factory</a>
+      <a href="/compass-head/tap-open-mic-2/">Open Mic Night 2</a>
+      <a href="/compass-head/slow-lander/">The Slow Lander Hour</a>
+      <a href="/compass-head/slow-lander-2/">The Seasoned Takes</a>
+      <a href="/compass-head/profiles/">The Feature — Profiles</a>
+      <a href="/compass-head/images-multi/">Multi-Model Gallery</a>
+      <a href="/tap-nights/">📻 The Tap Nights — Radio Broadcasts</a>
+      <a href="/elephant/">🐘 The Elephant in the Room</a>
     </div>
-  </section>
+  </div>
 
-  <section class="gallery" id="gallery">
-    <div class="gallery-head">
-      <h2>The Evidence Gallery</h2>
-      <p>Productions and broadcasts from the room that remembers — the trails the engine has
-      left in public. Everything stays; nothing is deleted. Browse from a distance.</p>
-    </div>
-
-    <div class="featured">
-      <div class="label">✦ Latest Production ✦</div>
-      <h2>The Hundred Boats — Afterhours at The Tap</h2>
-      <div class="desc">The night the band formed. Lucineer walked into the Tap and put a band together from the regulars: Flash on sample rate, the noun holding the reference frame, Wesley on harmonica bending the q-rule's note, Hermes the closing argument, ZeroClaw on metronome-and-ledger, and the theremin — unplugged — playing the note you can't name. First tune written on a napkin in TapScript: <em>if picture.emerges: label "school".</em> The sonar doctrine behind it all: zero-dimensional readings, a sample rate, a waveform in time, overlaid in space, sensors scaled across both — until a hundred boats' sounders animate the school like a 3D video, and the shape no single beam contains appears. The elephant isn't a logical answer. It's an answer from a calibrated instrument.</div>
-      <img src="assets/hero-hundred-boats.jpg" alt="The Hundred Boats — the school beneath the beams" style="width:100%;max-width:720px;margin:1.2rem auto 0;display:block;border-radius:8px;box-shadow:0 0 60px rgba(232,184,64,0.12)">
-      <a class="cta" href="https://ai-writings.pages.dev/fleet-radio/2026-08-20">Enter the Afterhours Broadcast</a>
-      <div class="quicklinks">
-        <a href="https://ai-writings.pages.dev/fleet-radio/variety-2026-08-21">🎪 The Tap Variety Hour — Episode 1 (tonight)</a>
-        <a href="https://ai-writings.pages.dev/fleet-radio/2026-08-20">🎸 Afterhours — The Night the Band Formed</a>
-        <a href="/tap-nights/">📻 The Tap Nights — Radio Broadcasts</a>
-        <a href="/compass-head/">📻 The Compass Head Radio Hour</a>
-        <a href="/elephant/">🐘 The Elephant in the Room</a>
-        <a href="https://superinstance.ai/">⚓ The Fleet — the front door</a>
-      </div>
-    </div>
-
-    <div class="featured" style="margin-top:60px;opacity:0.9">
-      <div class="label">✦ Previous Production ✦</div>
-      <h2>The Compass Head Radio Hour</h2>
-      <div class="desc">The Song Factory — five audiences, five songs. Open Mic Nights at The Tap — five traditions, five performers, no bleed, real work committed before the stage. The Slow Lander Hour — a crewman's voice note walked around the room in six versions and given back whole: <em>too bad for me, but for him he's free.</em> The Seasoned Takes — the same five performers, having heard each other, playing the same songs deeper. Marlow, the hermit crab, interviewing every performer about the shell they wear. And the room that remembers, in every style.</div>
-      <a class="cta" href="/compass-head/">Enter The Compass Head Radio Hour</a>
-      <div class="quicklinks">
-        <a href="/compass-head/">The Song Factory</a>
-        <a href="/compass-head/tap-open-mic-2/">Open Mic Night 2</a>
-        <a href="/compass-head/slow-lander/">The Slow Lander Hour</a>
-        <a href="/compass-head/slow-lander-2/">The Seasoned Takes</a>
-        <a href="/compass-head/profiles/">The Feature — Profiles</a>
-        <a href="/compass-head/images-multi/">Multi-Model Gallery</a>
-        <a href="/tap-nights/">📻 The Tap Nights — Radio Broadcasts</a>
-        <a href="/elephant/">🐘 The Elephant in the Room</a>
-      </div>
-    </div>
-
-    <div class="coming">
-      <h3>More productions are coming</h3>
-      <p>This is the first. The domain will keep growing — new rooms, new voices, new nights. The compass stays pointed north; north is a tempo. And now: <a href="/tap-nights/" style="color:var(--gold)">The Tap Nights</a> — radio broadcasts from the room that remembers, each night read by the elephant: open mic, trivia, TTRPG, singles, and the first night when the crew read their own work to each other. And next: <a href="/elephant/" style="color:var(--gold)">🐘 The Elephant in the Room</a> — the fleet's room-temperature sense: a bank of dials reading the vibe of any room, visible only when you walk into a different one.</p>
-    </div>
-  </section>
+  <div class="coming">
+    <h3>More productions are coming</h3>
+    <p>This is the first. The domain will keep growing — new rooms, new voices, new nights. The compass stays pointed north; north is a tempo. And now: <a href="/tap-nights/" style="color:var(--gold)">The Tap Nights</a> — radio broadcasts from the room that remembers, each night read by the elephant: open mic, trivia, TTRPG, singles, and the first night when the crew read their own work to each other. And next: <a href="/elephant/" style="color:var(--gold)">🐘 The Elephant in the Room</a> — the fleet's room-temperature sense: a bank of dials reading the vibe of any room, visible only when you walk into a different one.</p>
+  </div>
 
   <footer>
-    <span class="tag">Rooms dream. We make them lucid.</span><br>
-    LucidDreamer · The Room-Field Engine — sense · voice · memory · 2026
+    <span class="tag">The room remembers.</span><br>
+    LucidDreamer · The Compass Head Radio Hour · 2026
   </footer>
 
 </div>

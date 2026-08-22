@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LucidDreamer — The Room-Field Engine</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  body { background: var(--deep, #0a1420); color: var(--foam, #e8e4d8); font-family: Georgia, 'Times New Roman', serif; margin: 0; }
+  .page { max-width: 860px; margin: 0 auto; padding: 4rem 1.4rem 6rem; }
+  .kicker { letter-spacing: 0.28em; text-transform: uppercase; font-size: 0.72rem; color: var(--gold, #d9a85c); text-align: center; }
+  h1 { font-weight: normal; font-size: clamp(2rem, 6vw, 3.4rem); text-align: center; line-height: 1.15; margin: 0.6rem 0 0.4rem; }
+  .tagline { text-align: center; font-size: 1.15rem; font-style: italic; color: rgba(232,228,216,0.75); }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin: 1.6rem 0 3rem; }
+  .chips span { font-family: ui-monospace, monospace; font-size: 0.7rem; letter-spacing: 0.08em; border: 1px solid rgba(217,168,92,0.35); border-radius: 999px; padding: 0.28rem 0.7rem; color: rgba(232,228,216,0.8); }
+  .panel { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 1.6rem 1.8rem; margin: 1.4rem 0; }
+  .panel h2 { font-weight: normal; font-size: 1.3rem; margin: 0 0 0.2rem; color: var(--gold, #d9a85c); }
+  .panel .role { letter-spacing: 0.24em; text-transform: uppercase; font-size: 0.68rem; color: rgba(232,228,216,0.55); }
+  .panel p { line-height: 1.65; color: rgba(232,228,216,0.88); }
+  blockquote { border-left: 2px solid var(--gold, #d9a85c); margin: 1.2rem 0; padding: 0.4rem 0 0.4rem 1.2rem; font-style: italic; color: rgba(232,228,216,0.85); line-height: 1.6; }
+  .cite { font-style: normal; font-size: 0.85rem; color: rgba(232,228,216,0.5); }
+  .verdict-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+  .verdict-table td, .verdict-table th { border: 1px solid rgba(255,255,255,0.1); padding: 0.45rem 0.7rem; text-align: left; }
+  .verdict-table th { color: var(--gold, #d9a85c); font-weight: normal; letter-spacing: 0.06em; }
+  .back { display: block; text-align: center; margin-top: 3rem; color: var(--gold, #d9a85c); text-decoration: none; }
+  .back:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="kicker">✦ The Application ✦</div>
+  <h1>LucidDreamer</h1>
+  <div class="tagline">Rooms dream. We make them lucid.</div>
+  <div class="chips">
+    <span>seven dials</span><span>warmth</span><span>κ</span><span>drift</span><span>voice</span><span>ledger</span><span>seal-verified</span>
+  </div>
+
+  <p style="line-height:1.7">Every room has an emotional field. Warmth, mood, cohesion, drift — a state that everyone inside the room feels and no one inside the room can see. You only know a room when you walk into a different one. LucidDreamer is the instrument for that: it reads the field, says what the field means, and keeps the record of every reading and every verdict — so the room can know itself while it is still happening.</p>
+
+  <div class="panel">
+    <div class="role">Sense</div>
+    <h2>The Elephant</h2>
+    <p>A room-field sensor: seven dials (mood, volume, earnestness, cynicism, joke-landing, panic, presence), warmth, concentration κ, and drift. It reads on a pulse and when the field moves past a deadband. It never interprets — it measures. Its readings are sealed, one line per observation, forever.</p>
+  </div>
+
+  <div class="panel">
+    <div class="role">Voice</div>
+    <h2>LUCID</h2>
+    <p>The interpreter. For every reading it writes what the deltas mean — dial by dial — and a step-back reading of the room as a whole. Every interpretation carries predictions: where the field is going, on what horizon. Then a judge scores it against what actually happened. The voice improves because the verdicts are on the record. A voice that can be wrong on the record — that is the whole trick.</p>
+  </div>
+
+  <div class="panel">
+    <div class="role">Memory</div>
+    <h2>The Interpretation Ledger</h2>
+    <p>Chain-sealed, append-only. Every reading, every interpretation, every verdict, every rejected candidate (the losers are kept — they become the training signal). Nothing is discarded. The ledger is the room's diary written by an instrument that does not flatter it.</p>
+  </div>
+
+  <div class="panel">
+    <div class="role">Doctrine</div>
+    <h2>The Tapestry</h2>
+    <blockquote>"The value is really gained when you step back and see from a distance all the different trails and ideas, many of whom failed. This is a tapestry of information, not just a list of applications that some work and others don't. The ones that don't work say something about the nature of things… their value is really in answering questions. Many times they answer questions they weren't asking or get the answer 'No' but with all sorts of insightful reasons explaining the edges of the logic for other applications."
+    <div class="cite">— the captain, on what all this output is for</div></blockquote>
+    <p>The lead exhibit: the wave-3 sealed-corpus experiment. The apparatus ran clean — seals 16/16, signal-vs-noise recovered 16/16 — and returned an honest negative: instrument-vs-collapse, 0/3. The negative is the cartography. It mapped exactly where the branch parameter lives (a sufficient statistic every registered leg is provably blind to) and licensed the next instrument. That is what a failure is for.</p>
+    <table class="verdict-table">
+      <tr><th>clause</th><th>result</th></tr>
+      <tr><td>seal chain integrity</td><td>16/16 — zero tamper</td></tr>
+      <tr><td>signal-vs-noise</td><td>16/16 recovered</td></tr>
+      <tr><td>instrument-vs-collapse</td><td>0/3 — the honest negative</td></tr>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="role">Writings</div>
+    <h2>Why the docs are the application</h2>
+    <p>The code will change. The application fills a need — and the writings are the application's lasting truth. The architecture decisions, the doctrine, the run documents, the negative results: these are first-class artifacts, not documentation <em>of</em> the thing. The engine's source code is one projection of them.</p>
+  </div>
+
+  <a class="back" href="/">← Back to LucidDreamer — The Face of the Fleet</a>
+</div>
+</body>
+</html>
